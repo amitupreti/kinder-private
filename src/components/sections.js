@@ -618,7 +618,8 @@ export class MilkScreen extends Component {
             },
             volOfMilk: [
                 { id: 0, active: true, name: 'Ounces' },
-                { id: 1, active: false, name: 'Pound' }
+                { id: 1, active: false, name: 'Litre' },
+                { id: 2, active: false, name: 'ml' }
             ]
         }
     }
@@ -665,7 +666,7 @@ export class MilkScreen extends Component {
                                 fontSize: 24,
                                 color: '#FFF'
                             }
-                        }>BOttle</Text>
+                        }>Bottle</Text>
                     </View>
                 </View>
 
@@ -746,7 +747,44 @@ export class MilkScreen extends Component {
                                 })
                             }
                         </View>
+                    </View>
 
+                    <Hr />
+
+                    <View style={
+                        {
+                            flexDirection: 'row',
+                            justifyContent: 'space-between'
+                        }
+                    }>
+                        <View>
+                            <Text style={
+                                styles.heading
+                            }>Photos</Text>
+                        </View>
+                        <View>
+                            <Icon
+                                name="md-camera"
+                                size={35}
+                                color="#000"
+                            />
+                        </View>
+                    </View>
+
+                    <Hr />
+
+                    <View>
+                        <View>
+                            <Text style={
+                                styles.heading
+                            }>Notes</Text>
+                        </View>
+                        <View>
+                            <TextInput
+                                numberOfLines={1}
+                                placeholder="Type Optional Notes ..."
+                            />
+                        </View>
                     </View>
                 </View>
 
@@ -766,6 +804,149 @@ export class MilkScreen extends Component {
                     <View style={
                         {
                             backgroundColor: '#25b2bc',
+                            fontSize: 30,
+                            color: '#fff',
+                            textAlign: 'center',
+                            padding: 10,
+                            width: SCREEN_WIDTH,
+                        }
+                    }>
+                        <Text style={
+                            {
+                                color: '#fff',
+                                fontSize: 30,
+                                textAlign: 'center'
+                            }
+                        }>Save</Text>
+                    </View>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+}
+
+// Nap Screen
+export class NapScreen extends Component {
+    render() {
+
+        return (
+            <View style={
+                {
+                    flex: 1
+                }
+            }>
+                <StatusBar hidden={true} />
+                <View style={
+                    {
+                        flexDirection: 'row',
+                        backgroundColor: '#77ad45',
+                        padding: 10
+                    }
+                }>
+                    <Icon
+                        name="md-close"
+                        size={35}
+                        color="#fff"
+                        style={
+                            {
+                                paddingLeft: 10
+                            }
+                        }
+                        onPress={
+                            () => {
+                                this.props.navigation.navigate('Home');
+                            }
+                        }
+                    />
+                    <View>
+                        <Text style={
+                            {
+                                paddingLeft: 20,
+                                fontSize: 24,
+                                color: '#FFF'
+                            }
+                        }>Nap</Text>
+                    </View>
+                </View>
+
+                <View style={
+                    {
+                        padding: 10
+                    }
+                }>
+                    {/* CODE FROM HERE */}
+
+                    <View>
+                        <Text style={styles.heading}>
+                            Tag Students
+                        </Text>
+
+                        <View style={
+                            {
+                                flexDirection: 'row',
+                                flexWrap: 'wrap'
+                            }
+                        }>
+                            <KinderImage imageLink={BottleImage} imageTitle="Ram" />
+                            <KinderImage imageLink={DiaperImage} imageTitle="Shyam" />
+                            <KinderImage imageLink={IncidentImage} imageTitle="Hari" />
+                        </View>
+                    </View>
+
+                    <View style={
+                        {
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            marginTop: 20
+                        }
+                    }>
+                        <View>
+                            <Text style={
+                                styles.heading
+                            }>Photos</Text>
+                        </View>
+                        <View>
+                            <Icon
+                                name="md-camera"
+                                size={35}
+                                color="#000"
+                            />
+                        </View>
+                    </View>
+
+                    <Hr />
+
+                    <View>
+                        <View>
+                            <Text style={
+                                styles.heading
+                            }>Notes</Text>
+                        </View>
+                        <View>
+                            <TextInput
+                                numberOfLines={1}
+                                placeholder="Type Optional Notes ..."
+                            />
+                        </View>
+                    </View>
+                </View>
+
+                <TouchableOpacity style={
+                    {
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0
+                    }
+                }
+                    onPress={
+                        () => {
+                            ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                        }
+                    }
+                >
+                    <View style={
+                        {
+                            backgroundColor: '#77ad45',
                             fontSize: 30,
                             color: '#fff',
                             textAlign: 'center',

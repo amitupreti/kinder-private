@@ -34,7 +34,8 @@ import {
     NoticeScreen,
     IncidentScreen,
     MealScreen,
-    MilkScreen
+    MilkScreen,
+    NapScreen
 } from './sections';
 
 // Kinder Images
@@ -251,9 +252,12 @@ const TeacherHomePageMain = createDrawerNavigator({
     },
     Milk: {
         screen: MilkScreen
+    },
+    Nap: {
+        screen: NapScreen
     }
 }, {
-        initialRouteName: 'Milk'
+        initialRouteName: 'Nap'
     });
 
 // TEACHER HOME PAGE MAIN EXPORT
