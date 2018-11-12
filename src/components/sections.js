@@ -968,6 +968,332 @@ export class NapScreen extends Component {
     }
 }
 
+// Medicine Screen
+export class MedsScreen extends Component {
+    render() {
+
+        return (
+            <View style={
+                {
+                    flex: 1
+                }
+            }>
+                <StatusBar hidden={true} />
+                <View style={
+                    {
+                        flexDirection: 'row',
+                        backgroundColor: '#77ad45',
+                        padding: 10
+                    }
+                }>
+                    <Icon
+                        name="md-close"
+                        size={35}
+                        color="#fff"
+                        style={
+                            {
+                                paddingLeft: 10
+                            }
+                        }
+                        onPress={
+                            () => {
+                                this.props.navigation.navigate('Home');
+                            }
+                        }
+                    />
+                    <View>
+                        <Text style={
+                            {
+                                paddingLeft: 20,
+                                fontSize: 24,
+                                color: '#FFF'
+                            }
+                        }>Medicine</Text>
+                    </View>
+                </View>
+
+                <View style={
+                    {
+                        padding: 10
+                    }
+                }>
+                    {/* CODE FROM HERE */}
+
+                    <View>
+                        <Text style={styles.heading}>
+                            Tag Students
+                        </Text>
+
+                        <View style={
+                            {
+                                flexDirection: 'row',
+                                flexWrap: 'wrap'
+                            }
+                        }>
+                            <KinderImage imageLink={BottleImage} imageTitle="Ram" />
+                            <KinderImage imageLink={DiaperImage} imageTitle="Shyam" />
+                            <KinderImage imageLink={IncidentImage} imageTitle="Hari" />
+                        </View>
+                    </View>
+
+                    <View style={
+                        {
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            marginTop: 20
+                        }
+                    }>
+                        <View>
+                            <Text style={
+                                styles.heading
+                            }>Photos</Text>
+                        </View>
+                        <View>
+                            <Icon
+                                name="md-camera"
+                                size={35}
+                                color="#000"
+                            />
+                        </View>
+                    </View>
+
+                    <Hr />
+
+                    <View>
+                        <View>
+                            <Text style={
+                                styles.heading
+                            }>Notes</Text>
+                        </View>
+                        <View>
+                            <TextInput
+                                numberOfLines={1}
+                                placeholder="Type Optional Notes ..."
+                            />
+                        </View>
+                    </View>
+                </View>
+
+                <TouchableOpacity style={
+                    {
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0
+                    }
+                }
+                    onPress={
+                        () => {
+                            ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                        }
+                    }
+                >
+                    <View style={
+                        {
+                            backgroundColor: '#77ad45',
+                            fontSize: 30,
+                            color: '#fff',
+                            textAlign: 'center',
+                            padding: 10,
+                            width: SCREEN_WIDTH,
+                        }
+                    }>
+                        <Text style={
+                            {
+                                color: '#fff',
+                                fontSize: 30,
+                                textAlign: 'center'
+                            }
+                        }>Save</Text>
+                    </View>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+}
+
+// Diaper Screen
+export class DiaperScreen extends Component {
+
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            styleOptions: {
+                highlightOptions: {
+                    backgroundColor: '#dd5f40',
+                    color: '#FFFFFF'
+                },
+                unhighlightOptions: {
+                    backgroundColor: '#FFF',
+                    color: '#333333'
+                }
+            },
+            diaperChanged: [
+                { id: 0, active: true, name: 'Changed' },
+                { id: 1, active: false, name: 'Did\'t Change' }
+            ]
+        }
+    }
+
+
+    render() {
+
+        return (
+            <View style={
+                {
+                    flex: 1
+                }
+            }>
+                <StatusBar hidden={true} />
+                <View style={
+                    {
+                        flexDirection: 'row',
+                        backgroundColor: '#dd5f40',
+                        padding: 10
+                    }
+                }>
+                    <Icon
+                        name="md-close"
+                        size={35}
+                        color="#fff"
+                        style={
+                            {
+                                paddingLeft: 10
+                            }
+                        }
+                        onPress={
+                            () => {
+                                this.props.navigation.navigate('Home');
+                            }
+                        }
+                    />
+                    <View>
+                        <Text style={
+                            {
+                                paddingLeft: 20,
+                                fontSize: 24,
+                                color: '#FFF'
+                            }
+                        }>Diaper</Text>
+                    </View>
+                </View>
+
+                <View style={
+                    {
+                        padding: 10
+                    }
+                }>
+                    {/* CODE FROM HERE */}
+
+                    <View>
+                        <Text style={styles.heading}>
+                            Tag Students
+                        </Text>
+
+                        <View style={
+                            {
+                                flexDirection: 'row',
+                                flexWrap: 'wrap'
+                            }
+                        }>
+                            <KinderImage imageLink={BottleImage} imageTitle="Ram" />
+                            <KinderImage imageLink={DiaperImage} imageTitle="Shyam" />
+                            <KinderImage imageLink={IncidentImage} imageTitle="Hari" />
+                        </View>
+                    </View>
+
+                    <View style={
+                        {
+                            flexDirection: 'row',
+                            marginTop: 10
+                        }
+                    }>
+                        {
+                            this.state.diaperChanged.map(item => {
+                                let itemStyle = null;
+                                if (item.active === true) {
+                                    itemStyle = this.state.styleOptions.highlightOptions;
+                                } else {
+                                    itemStyle = this.state.styleOptions.unhighlightOptions;
+                                }
+                                return (
+                                    <TouchableOpacity onPress={() => false} key={item.id} style={{
+                                        flex: 1
+                                    }}>
+                                        <View style={[styles.options, { backgroundColor: itemStyle.backgroundColor }]}>
+                                            <Text style={[styles.optionsText, { color: itemStyle.color }]}>{item.name}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })
+                        }
+                    </View>
+
+                    <Hr />
+
+                    <View>
+                        <View>
+                            <Text style={styles.heading}>How many diapers changed?</Text>
+                        </View>
+                        <View>
+                            <TextInput keyboardType="numeric" placeholder="Number of Diapers" />
+                        </View>
+                    </View>
+
+                    <Hr />
+
+                    <View>
+                        <View>
+                            <Text style={
+                                styles.heading
+                            }>Notes</Text>
+                        </View>
+                        <View>
+                            <TextInput
+                                numberOfLines={1}
+                                placeholder="Type Optional Notes ..."
+                            />
+                        </View>
+                    </View>
+                </View>
+
+                <TouchableOpacity style={
+                    {
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0
+                    }
+                }
+                    onPress={
+                        () => {
+                            ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                        }
+                    }
+                >
+                    <View style={
+                        {
+                            backgroundColor: '#dd5f40',
+                            fontSize: 30,
+                            color: '#fff',
+                            textAlign: 'center',
+                            padding: 10,
+                            width: SCREEN_WIDTH,
+                        }
+                    }>
+                        <Text style={
+                            {
+                                color: '#fff',
+                                fontSize: 30,
+                                textAlign: 'center'
+                            }
+                        }>Save</Text>
+                    </View>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+}
+
 const styles = StyleSheet.create({
     heading: {
         fontSize: 20,
