@@ -37,7 +37,10 @@ import {
     MilkScreen,
     NapScreen,
     MedsScreen,
-    DiaperScreen
+    DiaperScreen,
+    ObservationScreen,
+    MilestoneScreen,
+    EachMilestone
 } from './sections';
 
 // Kinder Images
@@ -243,6 +246,15 @@ const TeacherHomePageMain = createDrawerNavigator({
     Home: {
         screen: TeacherHomePageTabNavigator
     },
+    Observation: {
+        screen: ObservationScreen
+    },
+    Milestone: {
+        screen: MilestoneScreen
+    },
+    EachMilestone: {
+        screen: EachMilestone
+    },
     Notice: {
         screen: NoticeScreen
     },
@@ -265,7 +277,7 @@ const TeacherHomePageMain = createDrawerNavigator({
         screen: DiaperScreen
     }
 }, {
-        initialRouteName: 'Home'
+        initialRouteName: 'Milestone'
     });
 
 // TEACHER HOME PAGE MAIN EXPORT
