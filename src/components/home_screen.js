@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { View, StatusBar, Image, StyleSheet, Dimensions } from "react-native";
+import { View, StatusBar, Image, StyleSheet, Dimensions, AsyncStorage } from "react-native";
 
 // Images
 import BackgroundImage from "../../images/Background.jpg";
@@ -16,6 +16,24 @@ class HomeScreen extends Component {
   static navigationOptions = {
     header: null
   };
+
+  constructor(props) {
+    super(props);
+  }
+
+  componentDidMount = async () => {
+    try {
+      const loginEmail = await AsyncStorage.getItem("loginEmail");
+      const loginId = await AsyncStorage.getItem("loginId");
+      const loginType = await AsyncStorage.getItem("loginType");
+
+      if (loginEmail !== null && loginId !== null && loginType !== null) {
+        this.props.navigation.navigate("TeacherHomePage");
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
 
   render() {
     return (
@@ -51,13 +69,12 @@ class HomeScreen extends Component {
           >
             <KinderButtonFill
               buttonTitle="Create Account"
-              navigateTo={this.props.navigation}
-              navigationScreen="CreateAccount"
+              onPress={() => this.props.navigation.navigate("CreateAccount")}
             />
+
             <KinderButtonStroke
               buttonTitle="Sign In"
-              navigateTo={this.props.navigation}
-              navigationScreen="SignIn"
+              onPress={() => this.props.navigation.navigate("SignIn")}
               style={{
                 marginTop: 20
               }}

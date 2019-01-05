@@ -1,5 +1,5 @@
 import React from "react";
-import { AppRegistry } from "react-native";
+import { AppRegistry, AsyncStorage } from "react-native";
 
 // Import the components
 // ...beforelogin
@@ -10,6 +10,7 @@ import SignInScreen from "./src/components/sign_in";
 
 // ...afterlogin
 import TeacherHomePageScreen from "./src/components/teacher_home_page";
+import ParentHomePageScreen from "./src/components/parent_home_page";
 
 // React Navigation
 import { createStackNavigator } from "react-navigation";
@@ -34,10 +35,14 @@ const RootStack = createStackNavigator(
 
     TeacherHomePage: {
       screen: TeacherHomePageScreen
+    },
+
+    ParentHomePage: {
+      screen: ParentHomePageScreen
     }
   },
   {
-    initialRouteName: "TeacherHomePage"
+    initialRouteName: "Home"
   }
 );
 

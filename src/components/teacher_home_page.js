@@ -6,7 +6,8 @@ import {
     StatusBar,
     Image,
     TouchableOpacity,
-    Dimensions
+    Dimensions,
+    AsyncStorage
 } from 'react-native';
 
 // COMPONENTS FOR INDIVIDIUAL SECTIONS
@@ -68,7 +69,35 @@ class HomeScreen extends Component {
         }
     }
 
+    _retrieveData = async () => {
+        try {
+            const loginEmail = await AsyncStorage.getItem("loginEmail");
+            const loginId = await AsyncStorage.getItem("loginId");
+            const loginType = await AsyncStorage.getItem("loginType");
+
+            if (loginEmail !== null && loginId !== null && loginType !== null) {
+                // IF DATA AVAILABLE IN AsyncStorage
+
+
+            }
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    _removeData = async () => {
+        try {
+            await AsyncStorage.multiRemove(["loginEmail", "loginId", "loginType"], function (error) {
+                if (error) throw error;
+            });
+        } catch (error) {
+            throw error;
+        }
+    }
+
     render() {
+        this._retrieveData();
+
         return (
             <View style={
                 {
@@ -154,7 +183,7 @@ class HomeScreen extends Component {
                             paddingRight: 20
                         }
                     }>
-                        <Icon onPress={() => alert("Settings")} name="md-settings" size={25} color="#fff" />
+                        <Icon onPress={() => this._removeData()} name="md-settings" size={25} color="#fff" />
                     </View>
                 </View>
 
@@ -277,7 +306,7 @@ const TeacherHomePageMain = createDrawerNavigator({
         screen: DiaperScreen
     }
 }, {
-        initialRouteName: 'Milestone'
+        initialRouteName: 'Home'
     });
 
 // TEACHER HOME PAGE MAIN EXPORT

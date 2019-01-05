@@ -47,7 +47,15 @@ export class EachMilestone extends Component {
         super(props);
 
         this.state = {
-            modalVisible: false
+            modalVisible: false,
+
+            progressIndicators: [
+                { label: 'O', color: '#299b95', title: 'Observed', desc: 'The milestone was observed.' },
+                { label: 'NO', color: '#f45c42', title: 'Not Observed', desc: 'The milestone was not observed.' },
+                { label: 'I', color: '#bc276f', title: 'Introduced', desc: 'The student was introduced to the milestone.' },
+                { label: 'D', color: '#520ba3', title: 'Developing', desc: 'The student is developing this milestone.' },
+                { label: 'M', color: '#1166CC', title: 'Mastered', desc: 'The student has mastered this milestone.' }
+            ]
         }
     }
 
@@ -99,6 +107,58 @@ export class EachMilestone extends Component {
                                 }
                             }>Progress Indicators</Text>
                         </View>
+                    </View>
+
+                    <View style={
+                        {
+                            padding: 10
+                        }
+                    }>
+                        {
+                            this.state.progressIndicators.map((item, index) => {
+                                return (
+                                    <TouchableHighlight key={index}>
+                                        <View style={
+                                            {
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
+                                                marginBottom: 40
+                                            }
+                                        }>
+                                            <View>
+                                                <Text style={
+                                                    {
+                                                        color: '#FFF',
+                                                        backgroundColor: item.color,
+                                                        padding: 10,
+                                                        width: 50,
+                                                        height: 50,
+                                                        borderRadius: 10,
+                                                        fontSize: 18,
+                                                        textAlign: 'center'
+                                                    }
+                                                }>{item.label}</Text>
+                                            </View>
+
+                                            <View style={
+                                                {
+                                                    flex: 1,
+                                                    paddingLeft: 20
+                                                }
+                                            }>
+                                                <Text style={
+                                                    {
+                                                        fontSize: 22,
+                                                        fontWeight: 'bold'
+                                                    }
+                                                }>{item.title}</Text>
+                                                <Text>{item.desc}</Text>
+                                            </View>
+                                        </View>
+                                    </TouchableHighlight>
+                                );
+                            })
+                        }
                     </View>
                 </Modal>
 
@@ -239,55 +299,6 @@ export class EachMilestone extends Component {
                                             borderRadius: 50
                                         }
                                     } source={DiaperImage} />
-                                    <Text style={
-                                        {
-                                            fontSize: 22,
-                                            paddingLeft: 20,
-                                            fontWeight: 'bold'
-                                        }
-                                    }>Dipesh Rai</Text>
-                                </View>
-
-                                <View style={
-                                    {
-                                        alignSelf: 'center',
-                                        backgroundColor: '#d1d1d1',
-                                        padding: 20,
-                                        borderRadius: 10
-                                    }
-                                }>
-                                    <Icon
-                                        name="md-add"
-                                        size={20}
-                                        color="#fff"
-                                    />
-                                </View>
-                            </View>
-                        </TouchableHighlight>
-
-                        <TouchableHighlight underlayColor='#E1E1E1' onPress={() => this.setState({ modalVisible: !this.state.modalVisible })}>
-                            <View style={
-                                {
-                                    padding: 20,
-                                    flexDirection: 'row',
-                                    justifyContent: 'space-between',
-                                    borderBottomColor: '#e1e1e1',
-                                    borderBottomWidth: 1
-                                }
-                            }>
-                                <View style={
-                                    {
-                                        flexDirection: 'row',
-                                        alignItems: 'center'
-                                    }
-                                }>
-                                    <Image style={
-                                        {
-                                            width: 80,
-                                            height: 80,
-                                            borderRadius: 50
-                                        }
-                                    } source={BottleImage} />
                                     <Text style={
                                         {
                                             fontSize: 22,
@@ -706,6 +717,32 @@ export class ObservationScreen extends Component {
 export class NoticeScreen extends Component {
     constructor(props) {
         super(props);
+
+        this.state = {
+            title: '',
+            avatarSource: null,
+            notes: ''
+        };
+    }
+
+    saveData = () => {
+        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/notice
+
+        fetch('http://192.168.1.143:3000/post/notice', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                title: this.state.title,
+                photo: this.state.avatarSource,
+                notes: this.state.notes
+            })
+        })
+            .then(res => res.json())
+            .then(response => {
+                alert(response.message);
+            });
     }
 
     render() {
@@ -760,13 +797,15 @@ export class NoticeScreen extends Component {
                         }>Title</Text>
                     </View>
                     <View>
-                        <TextInput style={
-                            {
-                                fontSize: 20,
-                                paddingTop: 4,
-                                paddingBottom: 4
-                            }
-                        } placeholder="Title ..." />
+                        <TextInput
+                            onChangeText={title => this.setState({ title })}
+                            style={
+                                {
+                                    fontSize: 20,
+                                    paddingTop: 4,
+                                    paddingBottom: 4
+                                }
+                            } placeholder="Title ..." />
                     </View>
 
                     <Hr />
@@ -787,6 +826,9 @@ export class NoticeScreen extends Component {
                                 name="md-camera"
                                 size={35}
                                 color="#000"
+                                onPress={
+                                    () => alert("OK")
+                                }
                             />
                         </View>
                     </View>
@@ -801,6 +843,7 @@ export class NoticeScreen extends Component {
                         </View>
                         <View>
                             <TextInput
+                                onChangeText={notes => this.setState({ notes })}
                                 numberOfLines={1}
                                 placeholder="Type Notes ..."
                             />
@@ -818,6 +861,8 @@ export class NoticeScreen extends Component {
                     onPress={
                         () => {
                             ToastAndroid.show('Saved', ToastAndroid.SHORT);
+
+                            this.saveData();
                         }
                     }
                 >
