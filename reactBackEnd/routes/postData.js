@@ -1,7 +1,9 @@
 var express = require('express');
 var router = express.Router();
 var mysql = require('mysql');
-var bodyParser = require('body-parser');
+var formidable = require('formidable');
+var path = require('path');
+var fs = require('fs');
 
 var con = mysql.createConnection({
     host: "localhost",
@@ -20,13 +22,8 @@ router.get("/", function (req, res, next) {
 });
 
 // NOTICE
-router.post("/notice/uploadImage", function (req, res, next) {
-    // SAVE DATA
-});
-
 router.get("/notice", function (req, res, next) {
     // SEND THE NOTICE DATA
-
     con.query("SELECT * FROM notice ORDER BY notice_id DESC", function (err, result, fields) {
         if (err) throw err;
 
@@ -35,14 +32,32 @@ router.get("/notice", function (req, res, next) {
 });
 
 router.post("/notice", function (req, res, next) {
-    const title = req.body.title;
-    const photo = req.body.photo;
-    const notes = req.body.notes;
-
-    con.query("INSERT INTO notice (notice_title, notice_photo, notice_note) VALUES ('" + title + "', '" + photo + "', '" + notes + "')", function (err, result, fields) {
+    var form = new formidable.IncomingForm();
+    form.parse(req, function (err, fields, files) {
         if (err) throw err;
 
-        res.json({ message: "NOTE SUBMITTED" });
+        // FOR FILES
+
+        var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var shuffled = str.split('').sort(function () { return 0.5 - Math.random() }).join('');
+        var finalShuffled = shuffled.substring(0, 6);
+
+        var oldpath = files.image.path;
+        var newpath = path.join(__dirname, "uploaded_images", "image_" + finalShuffled + "_" + files.image.name);
+
+        var textData = JSON.parse(fields.textdata);
+        var imageName = "image_" + finalShuffled + "_" + files.image.name;
+
+        fs.rename(oldpath, newpath, function (err) {
+            if (err) throw err;
+
+            con.query("INSERT INTO notice (notice_title, notice_photo, notice_note, notice_uploaded_by) VALUES ('" + textData['title'] + "', '" + imageName + "', '" + textData['notes'] + "', '" + textData['loginId'] + "')", function (err, result, fields) {
+                if (err) throw err;
+
+                res.json({ message: "Notice Uploaded" });
+            });
+
+        });
     });
 });
 
@@ -57,53 +72,138 @@ router.get("/incident", function (req, res, next) {
 });
 
 router.post("/incident", function (req, res, next) {
-    const title = req.body.title;
-    const photo = req.body.photo;
-    const notes = req.body.notes;
-    const time = req.body.time;
-    const students = req.body.students;
+    var form = new formidable.IncomingForm();
+    form.parse(req, function (err, fields, files) {
+        if (err) throw err;
 
+        // FOR FILES
+        var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var shuffled = str.split('').sort(function () { return 0.5 - Math.random() }).join('');
+        var finalShuffled = shuffled.substring(0, 6);
 
-    // SEND TO ONLY SELECTED STUDENTS
-    let selected = students.filter(function (student) {
-        return student.studentSelected;
-    })
+        var oldpath = files.image.path;
+        var newpath = path.join(__dirname, "uploaded_images", "image_" + finalShuffled + "_" + files.image.name);
 
-    selected.forEach(student => {
-        con.query("INSERT INTO incident (incident_student, incident_title, incident_note, incident_photo, incident_time) VALUES ('" + student.studentName + "', '" + title + "', '" + notes + "', '" + photo + "', '" + time + "')", function (err, result, fields) {
+        var textData = JSON.parse(fields.textdata);
+        var imageName = "image_" + finalShuffled + "_" + files.image.name;
+
+        // UPLOAD IMAGE
+        fs.rename(oldpath, newpath, function (err) {
             if (err) throw err;
 
-            res.json({ message: "NOTE SUBMITTED" });
+            // SEND TO ONLY SELECTED STUDENTS
+            let selected = textData['students'].filter(function (student) {
+                return student.studentSelected;
+            })
+
+            selected.forEach(eachStudent => {
+                // UPDATE DATABASE
+                con.query("INSERT INTO incident (incident_student, incident_title, incident_note, incident_photo, incident_time, incident_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['title'] + "', '" + textData['notes'] + "', '" + imageName + "','" + textData['time'] + "', '" + textData['loginId'] + "')", function (err, result, fields) {
+                    if (err) throw err;
+                });
+            });
+
         });
+
+        res.json({ message: "Incident Uploaded" });
     });
 });
 
 // MEAL SECTION
 router.get("/meal", function (req, res, next) {
     // GET MEAL DATA
-    // con.query("", function (err, result, fields) {
-    //     if (err) throw err;
+    con.query("SELECT * FROM meal ORDER BY meal_id DESC", function (err, result, fields) {
+        if (err) throw err;
 
-    //     res.status(200).json(result);
-    // });
+        res.status(200).json(result);
+    });
 });
 
 router.post("/meal", function (req, res, next) {
-    const photo = req.body.photo;
-    const notes = req.body.notes;
-    const students = req.body.students;
+    var form = new formidable.IncomingForm();
+    form.parse(req, function (err, fields, files) {
+        if (err) throw err;
 
-    // SEND TO ONLY SELECTED STUDENTS
-    let selected = students.filter(function (student) {
-        return student.studentSelected;
-    })
+        // FOR FILES
+        var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var shuffled = str.split('').sort(function () { return 0.5 - Math.random() }).join('');
+        var finalShuffled = shuffled.substring(0, 6);
 
-    selected.forEach(student => {
-        // con.query("", function (err, result, fields) {
+        var oldpath = files.image.path;
+        var newpath = path.join(__dirname, "uploaded_images", "image_" + finalShuffled + "_" + files.image.name);
+
+        var textData = JSON.parse(fields.textdata);
+        var imageName = "image_" + finalShuffled + "_" + files.image.name;
+
+        // UPLOAD IMAGE
+        fs.rename(oldpath, newpath, function (err) {
+            if (err) throw err;
+
+            // SEND TO ONLY SELECTED STUDENTS
+            let selected = textData['students'].filter(function (student) {
+                return student.studentSelected;
+            })
+
+            selected.forEach(eachStudent => {
+                // UPDATE DATABASE
+                con.query("INSERT INTO meal (meal_student, meal_type, meal_well, meal_photo, meal_note, meal_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['activeOption'][0]['name'] + "', '" + textData['howMuchOption'][0]['name'] + "', '" + imageName + "','" + textData['notes'] + "', '" + textData['loginId'] + "')", function (err, result, fields) {
+                    if (err) throw err;
+                });
+            });
+
+        });
+
+        res.json({ message: "Meal Uploaded" });
+    });
+});
+
+// MILK SECTION
+router.get("/milk", function (req, res, next) {
+    // GET MILK DATA
+    con.query("SELECT * FROM milk ORDER BY milk_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
+router.post("/milk", function (req, res, next) {
+    var form = new formidable.IncomingForm();
+    form.parse(req, function (err, fields, files) {
+        if (err) throw err;
+
+        // FOR FILES
+        var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var shuffled = str.split('').sort(function () { return 0.5 - Math.random() }).join('');
+        var finalShuffled = shuffled.substring(0, 6);
+
+        var oldpath = files.image.path;
+        var newpath = path.join(__dirname, "uploaded_images", "image_" + finalShuffled + "_" + files.image.name);
+
+        var textData = JSON.parse(fields.textdata);
+        var imageName = "image_" + finalShuffled + "_" + files.image.name;
+
+        console.log(textData);
+
+        // UPLOAD IMAGE
+        // fs.rename(oldpath, newpath, function (err) {
         //     if (err) throw err;
 
-        //     res.json({ message: "NOTE SUBMITTED" });
+        //     // SEND TO ONLY SELECTED STUDENTS
+        //     let selected = textData['students'].filter(function (student) {
+        //         return student.studentSelected;
+        //     })
+
+        //     selected.forEach(eachStudent => {
+        //         // UPDATE DATABASE
+        //         con.query("INSERT INTO meal (meal_student, meal_type, meal_well, meal_photo, meal_note, meal_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['activeOption'][0]['name'] + "', '" + textData['howMuchOption'][0]['name'] + "', '" + imageName + "','" + textData['notes'] + "', '" + textData['loginId'] + "')", function (err, result, fields) {
+        //             if (err) throw err;
+        //         });
+        //     });
+
         // });
+
+        res.json({ message: "Meal Uploaded" });
     });
 });
 
