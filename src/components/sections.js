@@ -11,8 +11,12 @@ import {
     ToastAndroid,
     ScrollView,
     Image,
-    Modal
+    Modal,
+    AsyncStorage
 } from 'react-native';
+
+import ImagePicker from 'react-native-image-picker';
+// import RNFetchBlob from 'react-native-fetch-blob';
 
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -720,13 +724,15 @@ export class NoticeScreen extends Component {
 
         this.state = {
             title: '',
-            avatarSource: null,
-            notes: ''
+            notes: '',
+            imageSource: null
         };
     }
 
     saveData = () => {
         // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/notice
+
+        const imageURL = this.state.imageSource == null ? "No Image" : this.state.imageSource.uri;
 
         fetch('http://192.168.1.143:3000/post/notice', {
             method: "POST",
@@ -735,7 +741,7 @@ export class NoticeScreen extends Component {
             },
             body: JSON.stringify({
                 title: this.state.title,
-                photo: this.state.avatarSource,
+                photo: imageURL,
                 notes: this.state.notes
             })
         })
@@ -743,6 +749,18 @@ export class NoticeScreen extends Component {
             .then(response => {
                 alert(response.message);
             });
+    }
+
+    selectPhotoTapped = () => {
+        const options = {
+            noData: true
+        }
+        ImagePicker.launchImageLibrary(options, response => {
+            if (response.uri) {
+                // IF THE RESPONSE GETS THE IMAGE URI THEN SET THE STATE
+                this.setState({ imageSource: response });
+            }
+        });
     }
 
     render() {
@@ -827,10 +845,22 @@ export class NoticeScreen extends Component {
                                 size={35}
                                 color="#000"
                                 onPress={
-                                    () => alert("OK")
+                                    () => this.selectPhotoTapped()
                                 }
                             />
                         </View>
+                    </View>
+
+                    <View>
+                        {
+                            this.state.imageSource &&
+                            <Image source={{ uri: this.state.imageSource.uri }} style={
+                                {
+                                    width: 100,
+                                    height: 100
+                                }
+                            } />
+                        }
                     </View>
 
                     <Hr />
@@ -861,7 +891,6 @@ export class NoticeScreen extends Component {
                     onPress={
                         () => {
                             ToastAndroid.show('Saved', ToastAndroid.SHORT);
-
                             this.saveData();
                         }
                     }
@@ -892,6 +921,96 @@ export class NoticeScreen extends Component {
 
 // Incident Screen
 export class IncidentScreen extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            students: [],
+
+            title: '',
+            notes: '',
+            imageSource: null,
+            time: '12:00'
+        };
+    }
+
+    componentDidMount = async () => {
+        const loginId = await AsyncStorage.getItem("loginId");
+
+        fetch("http://192.168.1.143:3000/post/students", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ loginId })
+        })
+            .then(res => res.json())
+            .then(response => {
+
+                let students = [];
+
+                response.forEach(eachRow => {
+                    let studentName = eachRow.student_name;
+                    let studentId = eachRow.student_id;
+                    let studentSelected = false;
+
+                    let obj = { studentName, studentId, studentSelected };
+
+                    students.push(obj);
+                });
+
+                this.setState({ students });
+            })
+            .catch(error => alert("ERROR"));
+    }
+
+    makeSelection = (studentId) => {
+        // MAKE SELECTION
+        let students = [...this.state.students];
+        students.forEach(eachStudent => {
+            if (eachStudent.studentId === studentId) {
+                eachStudent.studentSelected = !eachStudent.studentSelected;
+            }
+        });
+        this.setState({ students });
+    }
+
+    saveData = () => {
+        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/notice
+
+        const imageURL = this.state.imageSource == null ? "No Image" : this.state.imageSource.uri;
+
+        fetch('http://192.168.1.143:3000/post/incident', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                title: this.state.title,
+                photo: imageURL,
+                notes: this.state.notes,
+                time: this.state.time,
+                students: this.state.students
+            })
+        })
+            .then(res => res.json())
+            .then(response => {
+                alert(response.message);
+            });
+    }
+
+    selectPhotoTapped = () => {
+        const options = {
+            noData: true
+        }
+        ImagePicker.launchImageLibrary(options, response => {
+            if (response.uri) {
+                // IF THE RESPONSE GETS THE IMAGE URI THEN SET THE STATE
+                this.setState({ imageSource: response });
+            }
+        });
+    }
+
     render() {
         return (
             <View style={
@@ -949,9 +1068,17 @@ export class IncidentScreen extends Component {
                                 flexWrap: 'wrap'
                             }
                         }>
-                            <KinderImage imageLink={BottleImage} imageTitle="Ram" />
-                            <KinderImage imageLink={DiaperImage} imageTitle="Shyam" />
-                            <KinderImage imageLink={IncidentImage} imageTitle="Hari" />
+                            {
+                                this.state.students.map((student, index) => (
+                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                        <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                        {
+                                            student.studentSelected &&
+                                            <Text style={styles.studentSelected}>SELECTED</Text>
+                                        }
+                                    </TouchableOpacity>
+                                ))
+                            }
                         </View>
                     </View>
 
@@ -995,8 +1122,21 @@ export class IncidentScreen extends Component {
                                 name="md-camera"
                                 color="#16C"
                                 size={35}
+                                onPress={() => this.selectPhotoTapped()}
                             />
                         </View>
+                    </View>
+
+                    <View>
+                        {
+                            this.state.imageSource &&
+                            <Image source={{ uri: this.state.imageSource.uri }} style={
+                                {
+                                    width: 100,
+                                    height: 100
+                                }
+                            } />
+                        }
                     </View>
 
                     <Hr />
@@ -1007,13 +1147,15 @@ export class IncidentScreen extends Component {
                         }>Title</Text>
                     </View>
                     <View>
-                        <TextInput style={
-                            {
-                                fontSize: 20,
-                                paddingTop: 4,
-                                paddingBottom: 4
-                            }
-                        } placeholder="Title ..." />
+                        <TextInput
+                            onChangeText={title => this.setState({ title })}
+                            style={
+                                {
+                                    fontSize: 20,
+                                    paddingTop: 4,
+                                    paddingBottom: 4
+                                }
+                            } placeholder="Title ..." />
                     </View>
 
                     <Hr />
@@ -1027,6 +1169,7 @@ export class IncidentScreen extends Component {
                         <View>
                             <TextInput
                                 numberOfLines={1}
+                                onChangeText={notes => this.setState({ notes })}
                                 placeholder="Type Notes ..."
                             />
                         </View>
@@ -1043,6 +1186,7 @@ export class IncidentScreen extends Component {
                     onPress={
                         () => {
                             ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                            this.saveData();
                         }
                     }
                 >
@@ -1095,12 +1239,92 @@ export class MealScreen extends Component {
             howMuchOptions: [
                 { id: 0, active: true, name: 'Ate Well' },
                 { id: 1, active: false, name: 'Didn\'t Eat Well' },
-            ]
+            ],
+
+            // FOR SENDING DATA
+            students: [],
+            notes: '',
+            imageSource: null
         }
+    }
+
+    componentDidMount = async () => {
+        const loginId = await AsyncStorage.getItem("loginId");
+
+        fetch("http://192.168.1.143:3000/post/students", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ loginId })
+        })
+            .then(res => res.json())
+            .then(response => {
+
+                let students = [];
+
+                response.forEach(eachRow => {
+                    let studentName = eachRow.student_name;
+                    let studentId = eachRow.student_id;
+                    let studentSelected = false;
+
+                    let obj = { studentName, studentId, studentSelected };
+
+                    students.push(obj);
+                });
+
+                this.setState({ students });
+            })
+            .catch(error => alert("ERROR"));
+    }
+
+    makeSelection = (studentId) => {
+        // MAKE SELECTION
+        let students = [...this.state.students];
+        students.forEach(eachStudent => {
+            if (eachStudent.studentId === studentId) {
+                eachStudent.studentSelected = !eachStudent.studentSelected;
+            }
+        });
+        this.setState({ students });
+    }
+
+    selectPhotoTapped = () => {
+        const options = {
+            noData: true
+        }
+        ImagePicker.launchImageLibrary(options, response => {
+            if (response.uri) {
+                // IF THE RESPONSE GETS THE IMAGE URI THEN SET THE STATE
+                this.setState({ imageSource: response });
+            }
+        });
     }
 
     highlightOption = (itemId) => {
         alert(itemId);
+    }
+
+    saveData = () => {
+        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/meal
+
+        const imageURL = this.state.imageSource == null ? "No Image" : this.state.imageSource.uri;
+
+        fetch('http://192.168.1.143:3000/post/meal', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                photo: imageURL,
+                notes: this.state.notes,
+                students: this.state.students
+            })
+        })
+            .then(res => res.json())
+            .then(response => {
+                alert(response.message);
+            });
     }
 
     render() {
@@ -1162,9 +1386,17 @@ export class MealScreen extends Component {
                                 flexWrap: 'wrap'
                             }
                         }>
-                            <KinderImage imageLink={BottleImage} imageTitle="Ram" />
-                            <KinderImage imageLink={DiaperImage} imageTitle="Shyam" />
-                            <KinderImage imageLink={IncidentImage} imageTitle="Hari" />
+                            {
+                                this.state.students.map((student, index) => (
+                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                        <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                        {
+                                            student.studentSelected &&
+                                            <Text style={styles.studentSelected}>SELECTED</Text>
+                                        }
+                                    </TouchableOpacity>
+                                ))
+                            }
                         </View>
                     </View>
 
@@ -1252,8 +1484,21 @@ export class MealScreen extends Component {
                                 name="md-camera"
                                 size={35}
                                 color="#000"
+                                onPress={() => this.selectPhotoTapped()}
                             />
                         </View>
+                    </View>
+
+                    <View>
+                        {
+                            this.state.imageSource &&
+                            <Image source={{ uri: this.state.imageSource.uri }} style={
+                                {
+                                    width: 100,
+                                    height: 100
+                                }
+                            } />
+                        }
                     </View>
 
                     <Hr />
@@ -1268,6 +1513,7 @@ export class MealScreen extends Component {
                             <TextInput
                                 numberOfLines={1}
                                 placeholder="Type Optional Notes ..."
+                                onChangeText={notes => this.setState({ notes })}
                             />
                         </View>
                     </View>
@@ -1283,6 +1529,7 @@ export class MealScreen extends Component {
                     onPress={
                         () => {
                             ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                            this.saveData();
                         }
                     }
                 >
@@ -2017,5 +2264,10 @@ const styles = StyleSheet.create({
     optionsText: {
         textAlign: 'center',
         fontSize: 18
+    },
+
+    studentSelected: {
+        textAlign: 'center',
+        color: '#16C'
     }
 });

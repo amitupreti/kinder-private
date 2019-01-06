@@ -67,6 +67,8 @@ class SignInScreen extends Component {
           if (response.loginType == "parent") {
             // IF PARENT
             alert("PARENT");
+
+            this.props.navigation.navigate("ParentHomePage");
           } else if (response.loginType == "staff") {
             // IF STAFF
 
