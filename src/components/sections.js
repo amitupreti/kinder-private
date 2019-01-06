@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 
 import ImagePicker from 'react-native-image-picker';
-// import RNFetchBlob from 'react-native-fetch-blob';
+import RNFetchBlob from 'react-native-fetch-blob';
 
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -729,28 +729,41 @@ export class NoticeScreen extends Component {
         };
     }
 
-    saveData = () => {
+    // SAVE DATA TO DATABASE
+    saveData = async () => {
         // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/notice
 
-        const imageURL = this.state.imageSource == null ? "No Image" : this.state.imageSource.uri;
+        const loginId = await AsyncStorage.getItem("loginId");
 
-        fetch('http://192.168.1.143:3000/post/notice', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
+        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/notice/',
+            {
+                Authorization: "Bearer access-token",
+                'Content-Type': 'multipart/form-data'
             },
-            body: JSON.stringify({
-                title: this.state.title,
-                photo: imageURL,
-                notes: this.state.notes
-            })
-        })
-            .then(res => res.json())
-            .then(response => {
-                alert(response.message);
+            [
+                {
+                    name: 'image',
+                    filename: 'image.png',
+                    type: 'image/png',
+                    data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                },
+
+                {
+                    name: 'textdata',
+                    data: JSON.stringify({
+                        title: this.state.title,
+                        notes: this.state.notes,
+                        loginId
+                    })
+                }
+            ]).then((resp) => {
+                console.log(resp);
+            }).catch((err) => {
+                console.log(err);
             });
     }
 
+    // CHOOSE FROM LIBRARY
     selectPhotoTapped = () => {
         const options = {
             noData: true
@@ -890,7 +903,7 @@ export class NoticeScreen extends Component {
                 }
                     onPress={
                         () => {
-                            ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                            ToastAndroid.show('Notice Posted', ToastAndroid.SHORT);
                             this.saveData();
                         }
                     }
@@ -925,18 +938,20 @@ export class IncidentScreen extends Component {
         super(props);
 
         this.state = {
-            students: [],
+            students: [], // TAG STUDENTS
 
+            // INPUT SECTIONS
+            time: '12:00',
+            imageSource: null,
             title: '',
             notes: '',
-            imageSource: null,
-            time: '12:00'
         };
     }
 
     componentDidMount = async () => {
         const loginId = await AsyncStorage.getItem("loginId");
 
+        // GET ALL THE STUDENTS FOR LOGGED STAFF
         fetch("http://192.168.1.143:3000/post/students", {
             method: "POST",
             headers: {
@@ -964,6 +979,7 @@ export class IncidentScreen extends Component {
             .catch(error => alert("ERROR"));
     }
 
+    // TAG STUDENTS
     makeSelection = (studentId) => {
         // MAKE SELECTION
         let students = [...this.state.students];
@@ -975,27 +991,39 @@ export class IncidentScreen extends Component {
         this.setState({ students });
     }
 
-    saveData = () => {
-        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/notice
+    // SAVE DATA TO DATABASE
+    saveData = async () => {
+        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/incident
 
-        const imageURL = this.state.imageSource == null ? "No Image" : this.state.imageSource.uri;
+        const loginId = await AsyncStorage.getItem("loginId");
 
-        fetch('http://192.168.1.143:3000/post/incident', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
+        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/incident/',
+            {
+                Authorization: "Bearer access-token",
+                'Content-Type': 'multipart/form-data'
             },
-            body: JSON.stringify({
-                title: this.state.title,
-                photo: imageURL,
-                notes: this.state.notes,
-                time: this.state.time,
-                students: this.state.students
-            })
-        })
-            .then(res => res.json())
-            .then(response => {
-                alert(response.message);
+            [
+                {
+                    name: 'image',
+                    filename: 'image.png',
+                    type: 'image/png',
+                    data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                },
+
+                {
+                    name: 'textdata',
+                    data: JSON.stringify({
+                        time: this.state.time,
+                        title: this.state.title,
+                        notes: this.state.notes,
+                        students: this.state.students,
+                        loginId
+                    })
+                }
+            ]).then((resp) => {
+                console.log(resp);
+            }).catch((err) => {
+                console.log(err);
             });
     }
 
@@ -1185,7 +1213,7 @@ export class IncidentScreen extends Component {
                 }
                     onPress={
                         () => {
-                            ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                            ToastAndroid.show('Incident Saved', ToastAndroid.SHORT);
                             this.saveData();
                         }
                     }
@@ -1238,19 +1266,22 @@ export class MealScreen extends Component {
             ],
             howMuchOptions: [
                 { id: 0, active: true, name: 'Ate Well' },
-                { id: 1, active: false, name: 'Didn\'t Eat Well' },
+                { id: 1, active: false, name: "Didnt Eat Well" },
             ],
 
             // FOR SENDING DATA
-            students: [],
-            notes: '',
-            imageSource: null
+            students: [], // TAG STUDENTS
+
+            // INPUT SECTIONS
+            imageSource: null,
+            notes: ''
         }
     }
 
     componentDidMount = async () => {
         const loginId = await AsyncStorage.getItem("loginId");
 
+        // GET ALL THE STUDENTS FOR LOGGED STAFF
         fetch("http://192.168.1.143:3000/post/students", {
             method: "POST",
             headers: {
@@ -1278,6 +1309,7 @@ export class MealScreen extends Component {
             .catch(error => alert("ERROR"));
     }
 
+    // TAG STUDENTS
     makeSelection = (studentId) => {
         // MAKE SELECTION
         let students = [...this.state.students];
@@ -1287,6 +1319,50 @@ export class MealScreen extends Component {
             }
         });
         this.setState({ students });
+    }
+
+    // SAVE DATA TO DATABASE
+    saveData = async () => {
+        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/meal
+
+        const loginId = await AsyncStorage.getItem("loginId");
+
+        const activeOption = this.state.activeOptions.filter(eachOption => {
+            return eachOption['active'];
+        });
+
+        const howMuchOption = this.state.howMuchOptions.filter(eachOption => {
+            return eachOption['active'];
+        });
+
+        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/meal/',
+            {
+                Authorization: "Bearer access-token",
+                'Content-Type': 'multipart/form-data'
+            },
+            [
+                {
+                    name: 'image',
+                    filename: 'image.png',
+                    type: 'image/png',
+                    data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                },
+
+                {
+                    name: 'textdata',
+                    data: JSON.stringify({
+                        notes: this.state.notes,
+                        students: this.state.students,
+                        activeOption,
+                        howMuchOption,
+                        loginId
+                    })
+                }
+            ]).then((resp) => {
+                console.log(resp);
+            }).catch((err) => {
+                console.log(err);
+            });
     }
 
     selectPhotoTapped = () => {
@@ -1301,30 +1377,32 @@ export class MealScreen extends Component {
         });
     }
 
-    highlightOption = (itemId) => {
-        alert(itemId);
+    highlightOptionMealType = (itemId) => {
+        let activeOptions = [...this.state.activeOptions];
+
+        activeOptions.forEach(eachOption => {
+            if (itemId === eachOption['id']) {
+                eachOption['active'] = true;
+            } else {
+                eachOption['active'] = false;
+            }
+        });
+
+        this.setState({ activeOptions });
     }
 
-    saveData = () => {
-        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/meal
+    highlightOptionHowMuch = (itemId) => {
+        let howMuchOptions = [...this.state.howMuchOptions];
 
-        const imageURL = this.state.imageSource == null ? "No Image" : this.state.imageSource.uri;
+        howMuchOptions.forEach(eachOption => {
+            if (itemId === eachOption['id']) {
+                eachOption['active'] = true;
+            } else {
+                eachOption['active'] = false;
+            }
+        });
 
-        fetch('http://192.168.1.143:3000/post/meal', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                photo: imageURL,
-                notes: this.state.notes,
-                students: this.state.students
-            })
-        })
-            .then(res => res.json())
-            .then(response => {
-                alert(response.message);
-            });
+        this.setState({ howMuchOptions });
     }
 
     render() {
@@ -1416,7 +1494,7 @@ export class MealScreen extends Component {
                                 }
 
                                 return (
-                                    <TouchableOpacity onPress={() => this.highlightOption(item.id)} key={item.id} style={{
+                                    <TouchableOpacity onPress={() => this.highlightOptionMealType(item.id)} key={item.id} style={{
                                         flex: 1
                                     }}>
                                         <View style={[styles.options, { backgroundColor: itemStyle.backgroundColor }]}>
@@ -1453,7 +1531,7 @@ export class MealScreen extends Component {
                                         itemStyle = this.state.styleOptions.unhighlightOptions;
                                     }
                                     return (
-                                        <TouchableOpacity onPress={() => false} key={item.id} style={{
+                                        <TouchableOpacity onPress={() => this.highlightOptionHowMuch(item.id)} key={item.id} style={{
                                             flex: 1
                                         }}>
                                             <View style={[styles.options, { backgroundColor: itemStyle.backgroundColor }]}>
