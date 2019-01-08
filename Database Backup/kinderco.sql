@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 08, 2019 at 04:27 AM
+-- Generation Time: Jan 08, 2019 at 05:09 PM
 -- Server version: 10.1.21-MariaDB
 -- PHP Version: 7.1.2
 
@@ -46,26 +46,34 @@ INSERT INTO `admin_staff` (`staff_admin_id`, `staff_admin_email`, `staff_appoint
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `attendence`
+--
+
+CREATE TABLE `attendence` (
+  `attendance_id` int(11) NOT NULL,
+  `attendance_student` varchar(300) NOT NULL,
+  `attendance_date` date NOT NULL,
+  `attendance_checkin_time` varchar(300) NOT NULL,
+  `attendance_checkout_time` varchar(300) NOT NULL,
+  `attendance_checkedin` tinyint(1) NOT NULL,
+  `attendance_checkedout` tinyint(1) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `diaper`
 --
 
 CREATE TABLE `diaper` (
   `diaper_id` int(11) NOT NULL,
-  `diaper_student` int(11) NOT NULL,
+  `diaper_student` varchar(300) NOT NULL,
   `diaper_change` varchar(300) NOT NULL,
   `diaper_num` int(11) NOT NULL,
   `diaper_note` text NOT NULL,
   `diaper_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `diaper_uploaded_by` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
---
--- Dumping data for table `diaper`
---
-
-INSERT INTO `diaper` (`diaper_id`, `diaper_student`, `diaper_change`, `diaper_num`, `diaper_note`, `diaper_time`, `diaper_uploaded_by`) VALUES
-(1, 30, 'Didnt Change', 2, 'Diaper Changed Note', '2019-01-06 10:43:02', 1),
-(2, 28, 'Changed', 5, 'Diaper Changed Note 2', '2019-01-06 10:43:46', 1);
 
 -- --------------------------------------------------------
 
@@ -75,21 +83,13 @@ INSERT INTO `diaper` (`diaper_id`, `diaper_student`, `diaper_change`, `diaper_nu
 
 CREATE TABLE `incident` (
   `incident_id` int(11) NOT NULL,
-  `incident_student` int(11) NOT NULL,
+  `incident_student` varchar(300) NOT NULL,
   `incident_title` text NOT NULL,
   `incident_note` text NOT NULL,
   `incident_photo` text NOT NULL,
   `incident_time` varchar(300) NOT NULL,
   `incident_uploaded_by` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
---
--- Dumping data for table `incident`
---
-
-INSERT INTO `incident` (`incident_id`, `incident_student`, `incident_title`, `incident_note`, `incident_photo`, `incident_time`, `incident_uploaded_by`) VALUES
-(2, 29, 'Amit Had Accident', 'Amit had fight and injured himself', 'image_Y0M7EQ_image.png', '12:00', 3),
-(3, 30, 'Rakesh has lost his book', 'Rakesh has lost his book from class room', 'image_VZGO6E_image.png', '12:00', 1);
 
 -- --------------------------------------------------------
 
@@ -99,7 +99,7 @@ INSERT INTO `incident` (`incident_id`, `incident_student`, `incident_title`, `in
 
 CREATE TABLE `meal` (
   `meal_id` int(11) NOT NULL,
-  `meal_student` int(11) NOT NULL,
+  `meal_student` varchar(300) NOT NULL,
   `meal_type` varchar(300) NOT NULL,
   `meal_well` varchar(300) NOT NULL,
   `meal_photo` text NOT NULL,
@@ -107,15 +107,6 @@ CREATE TABLE `meal` (
   `meal_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `meal_uploaded_by` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
---
--- Dumping data for table `meal`
---
-
-INSERT INTO `meal` (`meal_id`, `meal_student`, `meal_type`, `meal_well`, `meal_photo`, `meal_note`, `meal_time`, `meal_uploaded_by`) VALUES
-(1, 28, 'Launch', 'Ate Well', 'image_95FTED_image.png', 'Notes', '2019-01-06 08:41:55', 1),
-(2, 30, 'Launch', 'Ate Well', 'image_95FTED_image.png', 'Notes', '2019-01-06 08:41:55', 1),
-(3, 30, 'Snack', 'Didnt Eat Well', 'image_FAK2B3_image.png', 'Not well', '2019-01-06 08:45:35', 1);
 
 -- --------------------------------------------------------
 
@@ -125,22 +116,13 @@ INSERT INTO `meal` (`meal_id`, `meal_student`, `meal_type`, `meal_well`, `meal_p
 
 CREATE TABLE `milk` (
   `milk_id` int(11) NOT NULL,
-  `milk_student` int(11) NOT NULL,
+  `milk_student` varchar(300) NOT NULL,
   `milk_time` varchar(300) NOT NULL,
   `milk_vol` varchar(300) NOT NULL,
   `milk_photo` text NOT NULL,
   `milk_note` text NOT NULL,
   `milk_uploaded_by` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
---
--- Dumping data for table `milk`
---
-
-INSERT INTO `milk` (`milk_id`, `milk_student`, `milk_time`, `milk_vol`, `milk_photo`, `milk_note`, `milk_uploaded_by`) VALUES
-(1, 28, '12:00', 'Litre', 'image_9EPXNR_image.png', 'This is optional note', 1),
-(2, 28, '12:00', 'Litre', 'image_HKT0BL_image.png', 'This is optional note', 1),
-(3, 30, '12:00', 'Litre', 'image_HKT0BL_image.png', 'This is optional note', 1);
 
 -- --------------------------------------------------------
 
@@ -150,19 +132,12 @@ INSERT INTO `milk` (`milk_id`, `milk_student`, `milk_time`, `milk_vol`, `milk_ph
 
 CREATE TABLE `nap` (
   `nap_id` int(11) NOT NULL,
-  `nap_student` int(11) NOT NULL,
+  `nap_student` varchar(300) NOT NULL,
   `nap_photo` text NOT NULL,
   `nap_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `nap_note` text NOT NULL,
   `nap_uploaded_by` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
---
--- Dumping data for table `nap`
---
-
-INSERT INTO `nap` (`nap_id`, `nap_student`, `nap_photo`, `nap_time`, `nap_note`, `nap_uploaded_by`) VALUES
-(1, 28, 'image_UPD512_image.png', '2019-01-06 09:49:14', 'This is nap section', 1);
 
 -- --------------------------------------------------------
 
@@ -179,13 +154,6 @@ CREATE TABLE `notice` (
   `notice_uploaded_by` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
---
--- Dumping data for table `notice`
---
-
-INSERT INTO `notice` (`notice_id`, `notice_title`, `notice_photo`, `notice_note`, `notice_time`, `notice_uploaded_by`) VALUES
-(26, 'Holiday Notice', 'image_P0QG8N_image.png', 'This is to notify all the parents that tomorrow is public holiday ', '2019-01-06 15:49:53', 3);
-
 -- --------------------------------------------------------
 
 --
@@ -194,7 +162,7 @@ INSERT INTO `notice` (`notice_id`, `notice_title`, `notice_photo`, `notice_note`
 
 CREATE TABLE `observation` (
   `observation_id` int(11) NOT NULL,
-  `observation_student` int(11) NOT NULL,
+  `observation_student` varchar(300) NOT NULL,
   `observation_milestone` text NOT NULL,
   `observation_time` varchar(300) NOT NULL,
   `observation_photo` text NOT NULL,
@@ -292,6 +260,12 @@ ALTER TABLE `admin_staff`
   ADD PRIMARY KEY (`staff_admin_id`);
 
 --
+-- Indexes for table `attendence`
+--
+ALTER TABLE `attendence`
+  ADD PRIMARY KEY (`attendance_id`);
+
+--
 -- Indexes for table `diaper`
 --
 ALTER TABLE `diaper`
@@ -362,35 +336,40 @@ ALTER TABLE `students`
 ALTER TABLE `admin_staff`
   MODIFY `staff_admin_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 --
+-- AUTO_INCREMENT for table `attendence`
+--
+ALTER TABLE `attendence`
+  MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT;
+--
 -- AUTO_INCREMENT for table `diaper`
 --
 ALTER TABLE `diaper`
-  MODIFY `diaper_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `diaper_id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `incident`
 --
 ALTER TABLE `incident`
-  MODIFY `incident_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `incident_id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `meal`
 --
 ALTER TABLE `meal`
-  MODIFY `meal_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `meal_id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `milk`
 --
 ALTER TABLE `milk`
-  MODIFY `milk_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `milk_id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `nap`
 --
 ALTER TABLE `nap`
-  MODIFY `nap_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `nap_id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `notice`
 --
 ALTER TABLE `notice`
-  MODIFY `notice_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `notice_id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `observation`
 --
