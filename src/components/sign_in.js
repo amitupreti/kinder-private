@@ -35,10 +35,9 @@ class SignInScreen extends Component {
     };
   }
 
-  _storeData = async (loginEmail, loginId, loginType) => {
+  _storeData = async (loginEmail, loginType) => {
     try {
       await AsyncStorage.setItem("loginEmail", String(loginEmail));
-      await AsyncStorage.setItem("loginId", String(loginId));
       await AsyncStorage.setItem("loginType", String(loginType));
     } catch (error) {
       throw error;
@@ -68,14 +67,14 @@ class SignInScreen extends Component {
             // IF PARENT
 
             // STORE THE LOGIN DATA
-            this._storeData(response.loginEmail, response.loginId, response.loginType);
+            this._storeData(response.loginEmail, response.loginType);
 
             this.props.navigation.navigate("ParentHomePage");
           } else if (response.loginType == "staff") {
             // IF STAFF
 
             // STORE THE LOGIN DATA
-            this._storeData(response.loginEmail, response.loginId, response.loginType);
+            this._storeData(response.loginEmail, response.loginType);
 
             // NAVIGATE TO TEACHER HOME PAGE
             this.props.navigation.navigate("TeacherHomePage");

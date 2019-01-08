@@ -7,14 +7,17 @@ import {
     Image,
     TouchableOpacity,
     Dimensions,
-    AsyncStorage
+    AsyncStorage,
+    StyleSheet
 } from 'react-native';
 
 // COMPONENTS FOR INDIVIDIUAL SECTIONS
-
 import Icon from 'react-native-vector-icons/Ionicons';
 // WIDTH AND HEIGHT OF SCREEN
 const SCREEN_WIDTH = Dimensions.get('window').width;
+
+// CAMERA COMPONENT
+import { RNCamera } from 'react-native-camera';
 
 import { createDrawerNavigator, createTabNavigator } from 'react-navigation';
 
@@ -72,10 +75,9 @@ class HomeScreen extends Component {
     _retrieveData = async () => {
         try {
             const loginEmail = await AsyncStorage.getItem("loginEmail");
-            const loginId = await AsyncStorage.getItem("loginId");
             const loginType = await AsyncStorage.getItem("loginType");
 
-            if (loginEmail !== null && loginId !== null && loginType !== null) {
+            if (loginEmail !== null && loginType !== null) {
                 // IF DATA AVAILABLE IN AsyncStorage
             }
         } catch (error) {
@@ -85,7 +87,7 @@ class HomeScreen extends Component {
 
     _removeData = async () => {
         try {
-            await AsyncStorage.multiRemove(["loginEmail", "loginId", "loginType"], function (error) {
+            await AsyncStorage.multiRemove(["loginEmail", "loginType"], function (error) {
                 if (error) throw error;
             });
         } catch (error) {
@@ -235,11 +237,95 @@ class HomeScreen extends Component {
     }
 }
 
-class AttendenceScreen extends Component {
+class AttendanceScreen extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            students: [], // TAG STUDENTS
+        };
+    }
+
+    componentDidMount = async () => {
+        try {
+            const loginEmail = await AsyncStorage.getItem("loginEmail");
+
+            // GET ALL THE STUDENTS FOR LOGGED STAFF
+            fetch("http://192.168.1.143:3000/post/students", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ loginEmail })
+            })
+                .then(res => res.json())
+                .then(response => {
+
+                    let students = [];
+
+                    response.forEach(eachRow => {
+                        let studentName = eachRow.student_name;
+                        let studentId = eachRow.student_id;
+                        let studentSelected = false;
+
+                        let obj = { studentName, studentId, studentSelected };
+
+                        students.push(obj);
+                    });
+
+                    this.setState({ students });
+                })
+                .catch(error => alert("ERROR"));
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    // TAG STUDENTS
+    makeSelection = (studentId) => {
+        // MAKE SELECTION
+        let students = [...this.state.students];
+        students.forEach(eachStudent => {
+            if (eachStudent.studentId === studentId) {
+                eachStudent.studentSelected = !eachStudent.studentSelected;
+            }
+        });
+        this.setState({ students });
+    }
+
     render() {
         return (
             <View>
-                <Text>Dipesh Rai</Text>
+                <View style={
+                    {
+                        padding: 10
+                    }
+                }>
+                    <View>
+                        <Text style={styles.heading}>
+                            Tag Students
+                    </Text>
+
+                        <View style={
+                            {
+                                flexDirection: 'row',
+                                flexWrap: 'wrap'
+                            }
+                        }>
+                            {
+                                this.state.students.map((student, index) => (
+                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                        <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                        {
+                                            student.studentSelected &&
+                                            <Text style={styles.studentSelected}>SELECTED</Text>
+                                        }
+                                    </TouchableOpacity>
+                                ))
+                            }
+                        </View>
+                    </View>
+                </View>
             </View>
         );
     }
@@ -265,13 +351,15 @@ const TeacherHomePageTabNavigator = createTabNavigator({
     Activities: {
         screen: HomeScreen
     },
-    Attendence: {
-        screen: AttendenceScreen
+    Attendance: {
+        screen: AttendanceScreen
     },
     Message: {
         screen: MessageScreen
     }
-});
+}, {
+        initialRouteName: 'Attendance'
+    });
 
 const TeacherHomePageMain = createDrawerNavigator({
     Home: {
@@ -325,3 +413,24 @@ class TeacherHomePage extends Component {
 }
 
 export default TeacherHomePage;
+
+const styles = StyleSheet.create({
+    heading: {
+        fontSize: 20,
+        fontWeight: 'bold'
+    },
+    options: {
+        padding: 8,
+        borderWidth: 0.5,
+        borderColor: '#25b2bc'
+    },
+    optionsText: {
+        textAlign: 'center',
+        fontSize: 18
+    },
+
+    studentSelected: {
+        textAlign: 'center',
+        color: '#16C'
+    }
+});

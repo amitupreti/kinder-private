@@ -24,10 +24,9 @@ class HomeScreen extends Component {
   componentDidMount = async () => {
     try {
       const loginEmail = await AsyncStorage.getItem("loginEmail");
-      const loginId = await AsyncStorage.getItem("loginId");
       const loginType = await AsyncStorage.getItem("loginType");
 
-      if (loginEmail !== null && loginId !== null && loginType !== null) {
+      if (loginEmail !== null && loginType !== null) {
         if (loginType === "parent") {
           this.props.navigation.navigate("ParentHomePage");
         } else if (loginType === "staff") {

@@ -57,7 +57,6 @@ class ParentHomePageScreen extends Component {
 
             // FETCHED FROM SERVER
             studentName: 'Loading...',
-            loginId: 0,
 
             // ALL THE POSTS
             notice: [],
@@ -66,6 +65,7 @@ class ParentHomePageScreen extends Component {
             milk: [],
             nap: [],
             diaper: [],
+            observation: [],
 
             // SHOWING THE CATEGORIES
             categories: [
@@ -74,39 +74,41 @@ class ParentHomePageScreen extends Component {
                 { key: "meal", active: true },
                 { key: "milk", active: true },
                 { key: "nap", active: true },
-                { key: "diaper", active: true }
+                { key: "diaper", active: true },
+                { key: "observation", active: true }
             ]
         };
     }
 
-    componentDidMount = async () => {
-        try {
-            const loginId = await AsyncStorage.getItem("loginId");
-            this._getUserDetails();
+    componentDidMount = () => {
 
-            // SET LOGIN ID OF STATE TO loginId
-            this.setState({ loginId });
+        AsyncStorage.getItem("loginEmail")
+            .then(loginEmail => {
 
-            // FETCH ALL DATA FROM SERVER
-            this.getAllData();
+                // GET USER DETAILS i.e. name and photo
+                this._getUserDetails();
 
-        } catch (error) {
-            throw error;
-        }
+                // FETCH ALL DATA FROM SERVER
+                this.getAllData();
+            })
+            .catch(err => {
+                console.error(err);
+            });
     }
 
     _getUserDetails = async () => {
         // GET STUDENT NAME AND SET THE studentName
         try {
-            const loginId = await AsyncStorage.getItem("loginId");
+            const loginEmail = await AsyncStorage.getItem("loginEmail");
 
+            this.setState({ loginEmail })
             const response = await fetch("http://192.168.1.143:3000/parent/student/", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    studentId: loginId
+                    studentEmail: loginEmail
                 })
             });
             const responseJSON = await response.json();
@@ -119,23 +121,29 @@ class ParentHomePageScreen extends Component {
     }
 
     getAllData = async () => {
-        const { categories } = this.state;
+        try {
+            const loginEmail = await AsyncStorage.getItem("loginEmail");
 
-        let activeCategories = categories.filter(eachCategory => {
-            return eachCategory['active'];
-        });
+            const { categories } = this.state;
 
-        activeCategories.forEach(async eachCategory => {
-            // FETCH ALL THE DATA FROM SERVER
-            fetch("http://192.168.1.143:3000/post/" + eachCategory.key + "/" + this.state.loginId)
-                .then(res => res.json())
-                .then(response => {
-                    this.setState({ [eachCategory.key]: response });
-                })
-                .catch(error => {
-                    throw error;
-                });
-        });
+            let activeCategories = categories.filter(eachCategory => {
+                return eachCategory['active'];
+            });
+
+            activeCategories.forEach(eachCategory => {
+                // FETCH ALL THE DATA FROM SERVER
+                fetch("http://192.168.1.143:3000/post/" + eachCategory.key + "/" + loginEmail)
+                    .then(res => res.json())
+                    .then(response => {
+                        this.setState({ [eachCategory.key]: response });
+                    })
+                    .catch(error => {
+                        throw error;
+                    });
+            });
+        } catch (error) {
+            throw error;
+        }
     }
 
     _removeData = async () => {
@@ -977,6 +985,119 @@ class ParentHomePageScreen extends Component {
                                                         eachDiaper['diaper_num']
                                                     }
                                                 </Text>
+                                            </View>
+
+                                            <View style={styles.buttonsContainer}>
+                                                <View style={styles.buttons}>
+                                                    <Text style={styles.buttontext}>
+                                                        <Icon name="md-download"
+                                                            size={30}
+                                                            color="#16C"
+                                                            style={
+                                                                {
+                                                                    paddingLeft: 5
+                                                                }
+                                                            } />
+                                                    </Text>
+                                                </View>
+
+                                                <View style={styles.buttons}>
+                                                    <Text style={styles.buttontext}>
+                                                        <Icon name="md-share"
+                                                            size={30}
+                                                            color="#16C"
+                                                            style={
+                                                                {
+                                                                    paddingLeft: 5
+                                                                }
+                                                            } />
+                                                    </Text>
+                                                </View>
+                                            </View>
+
+                                        </View>
+                                    )
+                                })
+                            }
+
+                            {
+                                // IF THERE ARE ANY OBSERVATION THEN
+                                this.state.observation.length !== 0 &&
+                                this.state.categories[6]['active'] &&
+                                this.state.observation.map((eachObservation, index) => {
+                                    return (
+                                        <View key={index} style={
+                                            {
+                                                backgroundColor: '#FFF',
+                                                marginTop: 5,
+                                                padding: 20,
+                                                borderRadius: 5
+                                            }
+                                        }>
+                                            <View style={
+                                                {
+                                                    flexDirection: 'row',
+                                                    justifyContent: 'space-between'
+                                                }
+                                            }>
+                                                <View style={
+                                                    {
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center'
+                                                    }
+                                                }>
+                                                    <View>
+                                                        <Image source={ObservationImage} style={
+                                                            {
+                                                                width: 60,
+                                                                height: 60,
+                                                                borderRadius: 30
+                                                            }
+                                                        } />
+                                                    </View>
+                                                    <View style={
+                                                        {
+                                                            paddingLeft: 10
+                                                        }
+                                                    }>
+                                                        <Text style={
+                                                            {
+                                                                fontSize: 20,
+                                                                color: '#16C',
+                                                                fontWeight: 'bold'
+                                                            }
+                                                        }>
+                                                            Observation
+                                                        </Text>
+                                                        <Text>
+                                                            {
+                                                                eachObservation['observation_time']
+                                                            }
+                                                        </Text>
+                                                    </View>
+                                                </View>
+
+                                                <View>
+                                                    <Icon name="md-bookmark"
+                                                        size={35}
+                                                        color="#777"
+                                                        style={
+                                                            {
+                                                                paddingLeft: 5
+                                                            }
+                                                        } />
+                                                </View>
+                                            </View>
+
+                                            <View>
+
+                                                <Text style={styles.description}>
+                                                    {
+                                                        eachObservation['observation_note']
+                                                    }
+                                                </Text>
+
+                                                <CustomImage imageName={eachObservation['observation_photo']} />
                                             </View>
 
                                             <View style={styles.buttonsContainer}>

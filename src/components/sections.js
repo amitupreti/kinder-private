@@ -537,7 +537,7 @@ export class ObservationScreen extends Component {
     }
 
     componentDidMount = async () => {
-        const loginId = await AsyncStorage.getItem("loginId");
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
 
         // GET ALL THE STUDENTS FOR LOGGED STAFF
         fetch("http://192.168.1.143:3000/post/students", {
@@ -545,7 +545,7 @@ export class ObservationScreen extends Component {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ loginId })
+            body: JSON.stringify({ loginEmail })
         })
             .then(res => res.json())
             .then(response => {
@@ -593,11 +593,11 @@ export class ObservationScreen extends Component {
 
     // SAVE DATA TO DATABASE
     saveData = async () => {
-        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/incident
+        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/observation
 
-        const loginId = await AsyncStorage.getItem("loginId");
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
 
-        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/incident/',
+        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/observation/',
             {
                 Authorization: "Bearer access-token",
                 'Content-Type': 'multipart/form-data'
@@ -614,10 +614,10 @@ export class ObservationScreen extends Component {
                     name: 'textdata',
                     data: JSON.stringify({
                         time: this.state.time,
-                        title: this.state.title,
                         notes: this.state.notes,
                         students: this.state.students,
-                        loginId
+                        milestone: this.state.milestone,
+                        loginEmail
                     })
                 }
             ]).then((resp) => {
@@ -856,7 +856,7 @@ export class NoticeScreen extends Component {
     saveData = async () => {
         // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/notice
 
-        const loginId = await AsyncStorage.getItem("loginId");
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
 
         RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/notice/',
             {
@@ -876,7 +876,7 @@ export class NoticeScreen extends Component {
                     data: JSON.stringify({
                         title: this.state.title,
                         notes: this.state.notes,
-                        loginId
+                        loginEmail
                     })
                 }
             ]).then((resp) => {
@@ -1072,7 +1072,7 @@ export class IncidentScreen extends Component {
     }
 
     componentDidMount = async () => {
-        const loginId = await AsyncStorage.getItem("loginId");
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
 
         // GET ALL THE STUDENTS FOR LOGGED STAFF
         fetch("http://192.168.1.143:3000/post/students", {
@@ -1080,7 +1080,7 @@ export class IncidentScreen extends Component {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ loginId })
+            body: JSON.stringify({ loginEmail })
         })
             .then(res => res.json())
             .then(response => {
@@ -1118,7 +1118,7 @@ export class IncidentScreen extends Component {
     saveData = async () => {
         // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/incident
 
-        const loginId = await AsyncStorage.getItem("loginId");
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
 
         RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/incident/',
             {
@@ -1140,7 +1140,7 @@ export class IncidentScreen extends Component {
                         title: this.state.title,
                         notes: this.state.notes,
                         students: this.state.students,
-                        loginId
+                        loginEmail
                     })
                 }
             ]).then((resp) => {
@@ -1402,7 +1402,7 @@ export class MealScreen extends Component {
     }
 
     componentDidMount = async () => {
-        const loginId = await AsyncStorage.getItem("loginId");
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
 
         // GET ALL THE STUDENTS FOR LOGGED STAFF
         fetch("http://192.168.1.143:3000/post/students", {
@@ -1410,7 +1410,7 @@ export class MealScreen extends Component {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ loginId })
+            body: JSON.stringify({ loginEmail })
         })
             .then(res => res.json())
             .then(response => {
@@ -1448,7 +1448,7 @@ export class MealScreen extends Component {
     saveData = async () => {
         // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/meal
 
-        const loginId = await AsyncStorage.getItem("loginId");
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
 
         const activeOption = this.state.activeOptions.filter(eachOption => {
             return eachOption['active'];
@@ -1478,7 +1478,7 @@ export class MealScreen extends Component {
                         students: this.state.students,
                         activeOption,
                         howMuchOption,
-                        loginId
+                        loginEmail
                     })
                 }
             ]).then((resp) => {
@@ -1791,7 +1791,7 @@ export class MilkScreen extends Component {
     }
 
     componentDidMount = async () => {
-        const loginId = await AsyncStorage.getItem("loginId");
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
 
         // GET ALL THE STUDENTS FOR LOGGED STAFF
         fetch("http://192.168.1.143:3000/post/students", {
@@ -1799,7 +1799,7 @@ export class MilkScreen extends Component {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ loginId })
+            body: JSON.stringify({ loginEmail })
         })
             .then(res => res.json())
             .then(response => {
@@ -1837,7 +1837,7 @@ export class MilkScreen extends Component {
     saveData = async () => {
         // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/milk
 
-        const loginId = await AsyncStorage.getItem("loginId");
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
 
         const volOfMilk = this.state.volOfMilk.filter(eachOption => {
             return eachOption['active'];
@@ -1863,7 +1863,7 @@ export class MilkScreen extends Component {
                         students: this.state.students,
                         time: this.state.time,
                         volOfMilk,
-                        loginId
+                        loginEmail
                     })
                 }
             ]).then((resp) => {
@@ -2135,7 +2135,7 @@ export class NapScreen extends Component {
     }
 
     componentDidMount = async () => {
-        const loginId = await AsyncStorage.getItem("loginId");
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
 
         // GET ALL THE STUDENTS FOR LOGGED STAFF
         fetch("http://192.168.1.143:3000/post/students", {
@@ -2143,7 +2143,7 @@ export class NapScreen extends Component {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ loginId })
+            body: JSON.stringify({ loginEmail })
         })
             .then(res => res.json())
             .then(response => {
@@ -2193,7 +2193,7 @@ export class NapScreen extends Component {
     saveData = async () => {
         // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/nap
 
-        const loginId = await AsyncStorage.getItem("loginId");
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
 
         RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/nap/',
             {
@@ -2213,7 +2213,7 @@ export class NapScreen extends Component {
                     data: JSON.stringify({
                         notes: this.state.notes,
                         students: this.state.students,
-                        loginId
+                        loginEmail
                     })
                 }
             ]).then((resp) => {
@@ -2562,7 +2562,7 @@ export class DiaperScreen extends Component {
     }
 
     componentDidMount = async () => {
-        const loginId = await AsyncStorage.getItem("loginId");
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
 
         // GET ALL THE STUDENTS FOR LOGGED STAFF
         fetch("http://192.168.1.143:3000/post/students", {
@@ -2570,7 +2570,7 @@ export class DiaperScreen extends Component {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ loginId })
+            body: JSON.stringify({ loginEmail })
         })
             .then(res => res.json())
             .then(response => {
@@ -2622,7 +2622,7 @@ export class DiaperScreen extends Component {
     saveData = async () => {
         // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/diaper
 
-        const loginId = await AsyncStorage.getItem("loginId");
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
 
         const diaperChanged = this.state.diaperChanged.filter(eachOption => {
             return eachOption['active'];
@@ -2641,7 +2641,7 @@ export class DiaperScreen extends Component {
                         students: this.state.students,
                         diaperChanged,
                         num_diapers: this.state.num_diapers,
-                        loginId
+                        loginEmail
                     })
                 }
             ]).then((resp) => {
