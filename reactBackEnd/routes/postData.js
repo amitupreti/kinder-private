@@ -26,7 +26,16 @@ router.get("/notice", function (req, res, next) {
     // SEND THE NOTICE DATA
     con.query("SELECT * FROM notice ORDER BY notice_id DESC", function (err, result, fields) {
         if (err) throw err;
+        console.log(result);
+        res.status(200).json(result);
+    });
+});
 
+router.get("/notice/:student_id", function (req, res, next) {
+    // SEND THE NOTICE DATA
+    con.query("SELECT * FROM notice ORDER BY notice_id DESC", function (err, result, fields) {
+        if (err) throw err;
+        console.log(result);
         res.status(200).json(result);
     });
 });
@@ -65,6 +74,16 @@ router.post("/notice", function (req, res, next) {
 router.get("/incident", function (req, res, next) {
     // GET INCIDENT DATA
     con.query("SELECT * FROM incident ORDER BY incident_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
+router.get("/incident/:student_id", function (req, res, next) {
+    let student_id = req.params.student_id;
+    // GET INCIDENT DATA
+    con.query("SELECT * FROM incident WHERE incident_student='" + student_id + "' ORDER BY incident_id DESC", function (err, result, fields) {
         if (err) throw err;
 
         res.status(200).json(result);
@@ -119,6 +138,16 @@ router.get("/meal", function (req, res, next) {
     });
 });
 
+router.get("/meal/:student_id", function (req, res, next) {
+    let student_id = req.params.student_id;
+    // GET MEAL DATA
+    con.query("SELECT * FROM meal WHERE meal_student='" + student_id + "' ORDER BY meal_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
 router.post("/meal", function (req, res, next) {
     var form = new formidable.IncomingForm();
     form.parse(req, function (err, fields, files) {
@@ -167,6 +196,16 @@ router.get("/milk", function (req, res, next) {
     });
 });
 
+router.get("/milk/:student_id", function (req, res, next) {
+    let student_id = req.params.student_id;
+    // GET MILK DATA
+    con.query("SELECT * FROM milk WHERE milk_student='" + student_id + "' ORDER BY milk_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
 router.post("/milk", function (req, res, next) {
     var form = new formidable.IncomingForm();
     form.parse(req, function (err, fields, files) {
@@ -186,24 +225,125 @@ router.post("/milk", function (req, res, next) {
         console.log(textData);
 
         // UPLOAD IMAGE
-        // fs.rename(oldpath, newpath, function (err) {
-        //     if (err) throw err;
+        fs.rename(oldpath, newpath, function (err) {
+            if (err) throw err;
 
-        //     // SEND TO ONLY SELECTED STUDENTS
-        //     let selected = textData['students'].filter(function (student) {
-        //         return student.studentSelected;
-        //     })
+            // SEND TO ONLY SELECTED STUDENTS
+            let selected = textData['students'].filter(function (student) {
+                return student.studentSelected;
+            })
 
-        //     selected.forEach(eachStudent => {
-        //         // UPDATE DATABASE
-        //         con.query("INSERT INTO meal (meal_student, meal_type, meal_well, meal_photo, meal_note, meal_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['activeOption'][0]['name'] + "', '" + textData['howMuchOption'][0]['name'] + "', '" + imageName + "','" + textData['notes'] + "', '" + textData['loginId'] + "')", function (err, result, fields) {
-        //             if (err) throw err;
-        //         });
-        //     });
+            selected.forEach(eachStudent => {
+                // UPDATE DATABASE
+                con.query("INSERT INTO milk (milk_student, milk_time, milk_vol, milk_photo, milk_note, milk_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['time'] + "', '" + textData['volOfMilk'][0]['name'] + "', '" + imageName + "','" + textData['notes'] + "', '" + textData['loginId'] + "')", function (err, result, fields) {
+                    if (err) throw err;
+                });
+            });
 
-        // });
+        });
 
-        res.json({ message: "Meal Uploaded" });
+        res.json({ message: "Milk Uploaded" });
+    });
+});
+
+// NAP SECTION
+router.get("/nap", function (req, res, next) {
+    // GET NAP DATA
+    con.query("SELECT * FROM nap ORDER BY nap_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
+router.get("/nap/:student_id", function (req, res, next) {
+    let student_id = req.params.student_id;
+    // GET NAP DATA
+    con.query("SELECT * FROM nap WHERE nap_student='" + student_id + "' ORDER BY nap_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
+router.post("/nap", function (req, res, next) {
+    var form = new formidable.IncomingForm();
+    form.parse(req, function (err, fields, files) {
+        if (err) throw err;
+
+        // FOR FILES
+        var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var shuffled = str.split('').sort(function () { return 0.5 - Math.random() }).join('');
+        var finalShuffled = shuffled.substring(0, 6);
+
+        var oldpath = files.image.path;
+        var newpath = path.join(__dirname, "uploaded_images", "image_" + finalShuffled + "_" + files.image.name);
+
+        var textData = JSON.parse(fields.textdata);
+        var imageName = "image_" + finalShuffled + "_" + files.image.name;
+
+        // UPLOAD IMAGE
+        fs.rename(oldpath, newpath, function (err) {
+            if (err) throw err;
+
+            // SEND TO ONLY SELECTED STUDENTS
+            let selected = textData['students'].filter(function (student) {
+                return student.studentSelected;
+            })
+
+            selected.forEach(eachStudent => {
+                // UPDATE DATABASE
+                con.query("INSERT INTO nap (nap_student, nap_photo, nap_note, nap_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + imageName + "', '" + textData['notes'] + "', '" + textData['loginId'] + "')", function (err, result, fields) {
+                    if (err) throw err;
+                });
+            });
+
+        });
+
+        res.json({ message: "Nap Uploaded" });
+    });
+});
+
+// DIAPER SECTION
+router.get("/diaper", function (req, res, next) {
+    // GET DIAPER DATA
+    con.query("SELECT * FROM diaper ORDER BY diaper_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
+router.get("/diaper/:student_id", function (req, res, next) {
+    let student_id = req.params.student_id;
+    // GET DIAPER DATA
+    con.query("SELECT * FROM diaper WHERE diaper_student='" + student_id + "' ORDER BY diaper_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
+router.post("/diaper", function (req, res, next) {
+    var form = new formidable.IncomingForm();
+    form.parse(req, function (err, fields, files) {
+        if (err) throw err;
+
+        var textData = JSON.parse(fields.textdata);
+
+        // SEND TO ONLY SELECTED STUDENTS
+        let selected = textData['students'].filter(function (student) {
+            return student.studentSelected;
+        })
+
+        selected.forEach(eachStudent => {
+            // UPDATE DATABASE
+            con.query("INSERT INTO diaper (diaper_student, diaper_change, diaper_num, diaper_note, diaper_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['diaperChanged'][0]['name'] + "', '" + textData['num_diapers'] + "', '" + textData['notes'] + "', '" + textData['loginId'] + "')", function (err, result, fields) {
+                if (err) throw err;
+            });
+        });
+
+        res.json({ message: "Diaper Uploaded" });
     });
 });
 

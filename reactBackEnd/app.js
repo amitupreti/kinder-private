@@ -6,7 +6,6 @@ var logger = require('morgan');
 var cors = require('cors');
 
 var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
 
 // CREATE ACCOUNT
 var createAccount = require('./routes/createAccount');
@@ -16,6 +15,8 @@ var logIn = require('./routes/logIn');
 var forgotPassword = require('./routes/forgotPassword');
 // POST DATA
 var postData = require('./routes/postData');
+// PARENT DATA
+var parentRouter = require('./routes/parent');
 
 var app = express();
 
@@ -28,9 +29,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'routes', 'uploaded_images')));
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/parent', parentRouter);
 app.use('/createaccount', createAccount);
 app.use('/login', logIn);
 app.use('/forgotpassword', forgotPassword);
