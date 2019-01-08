@@ -9,7 +9,9 @@ import {
     TouchableOpacity,
     Dimensions,
     StyleSheet,
-    AsyncStorage
+    AsyncStorage,
+    BackHandler,
+    ToastAndroid
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -94,6 +96,19 @@ class ParentHomePageScreen extends Component {
             .catch(err => {
                 console.error(err);
             });
+
+        // PREVENT BACK BUTTON
+        BackHandler.addEventListener('hardwareBackPress', this.handleBackButton);
+    }
+
+    componentWillUnmount = () => {
+        // REMOVE EVENT LISTENER
+        BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton);
+    }
+
+    handleBackButton = () => {
+        ToastAndroid.show("YOU CANNOT GO BACK", ToastAndroid.SHORT);
+        return true;
     }
 
     _getUserDetails = async () => {
@@ -148,7 +163,7 @@ class ParentHomePageScreen extends Component {
 
     _removeData = async () => {
         try {
-            await AsyncStorage.multiRemove(["loginEmail", "loginId", "loginType"], function (error) {
+            await AsyncStorage.multiRemove(["loginEmail", "loginType"], function (error) {
                 if (error) throw error;
             });
         } catch (error) {
@@ -252,7 +267,7 @@ class ParentHomePageScreen extends Component {
                                                     fontSize: 17,
                                                     textAlign: 'center'
                                                 }
-                                            }>Weekly Reports</Text>
+                                            }>Log Out</Text>
                                         </View>
                                     </TouchableOpacity>
                                 </View>

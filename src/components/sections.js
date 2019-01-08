@@ -554,7 +554,7 @@ export class ObservationScreen extends Component {
 
                 response.forEach(eachRow => {
                     let studentName = eachRow.student_name;
-                    let studentId = eachRow.student_id;
+                    let studentId = eachRow.student_parent_email;
                     let studentSelected = false;
 
                     let obj = { studentName, studentId, studentSelected };
@@ -1089,7 +1089,7 @@ export class IncidentScreen extends Component {
 
                 response.forEach(eachRow => {
                     let studentName = eachRow.student_name;
-                    let studentId = eachRow.student_id;
+                    let studentId = eachRow.student_parent_email;
                     let studentSelected = false;
 
                     let obj = { studentName, studentId, studentSelected };
@@ -1419,7 +1419,7 @@ export class MealScreen extends Component {
 
                 response.forEach(eachRow => {
                     let studentName = eachRow.student_name;
-                    let studentId = eachRow.student_id;
+                    let studentId = eachRow.student_parent_email;
                     let studentSelected = false;
 
                     let obj = { studentName, studentId, studentSelected };
@@ -1808,7 +1808,7 @@ export class MilkScreen extends Component {
 
                 response.forEach(eachRow => {
                     let studentName = eachRow.student_name;
-                    let studentId = eachRow.student_id;
+                    let studentId = eachRow.student_parent_emarril;
                     let studentSelected = false;
 
                     let obj = { studentName, studentId, studentSelected };
@@ -2152,7 +2152,7 @@ export class NapScreen extends Component {
 
                 response.forEach(eachRow => {
                     let studentName = eachRow.student_name;
-                    let studentId = eachRow.student_id;
+                    let studentId = eachRow.student_parent_email;
                     let studentSelected = false;
 
                     let obj = { studentName, studentId, studentSelected };
@@ -2579,7 +2579,7 @@ export class DiaperScreen extends Component {
 
                 response.forEach(eachRow => {
                     let studentName = eachRow.student_name;
-                    let studentId = eachRow.student_id;
+                    let studentId = eachRow.student_parent_email;
                     let studentSelected = false;
 
                     let obj = { studentName, studentId, studentSelected };

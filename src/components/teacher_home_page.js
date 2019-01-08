@@ -4,11 +4,12 @@ import {
     Text,
     Picker,
     StatusBar,
-    Image,
     TouchableOpacity,
     Dimensions,
     AsyncStorage,
-    StyleSheet
+    StyleSheet,
+    BackHandler,
+    ToastAndroid
 } from 'react-native';
 
 // COMPONENTS FOR INDIVIDIUAL SECTIONS
@@ -17,9 +18,9 @@ import Icon from 'react-native-vector-icons/Ionicons';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 // CAMERA COMPONENT
-import { RNCamera } from 'react-native-camera';
+// import { RNCamera } from 'react-native-camera';
 
-import { createDrawerNavigator, createTabNavigator } from 'react-navigation';
+import { createDrawerNavigator, createMaterialTopTabNavigator } from 'react-navigation';
 
 // for images
 import BottleImage from '../images/bottle.jpg';
@@ -72,6 +73,19 @@ class HomeScreen extends Component {
         }
     }
 
+    componentDidMount = () => {
+        BackHandler.addEventListener('hardwareBackPress', this.handleBackButton);
+    }
+
+    componentWillUnmount = () => {
+        BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton);
+    }
+
+    handleBackButton = () => {
+        ToastAndroid.show('YOU CANNOT GO BACK', ToastAndroid.SHORT);
+        return true;
+    }
+
     _retrieveData = async () => {
         try {
             const loginEmail = await AsyncStorage.getItem("loginEmail");
@@ -108,89 +122,6 @@ class HomeScreen extends Component {
                     flex: 1
                 }
             }>
-                <View style={
-                    {
-                        backgroundColor: '#16C',
-                        height: 70,
-                        elevation: 5,
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                    }
-                }>
-                    <StatusBar hidden={true} />
-                    <View style={
-                        {
-                            paddingLeft: 5,
-                            paddingRight: 5
-                        }
-                    }>
-                        <Icon
-                            name="md-menu"
-                            size={35}
-                            color="#fff"
-                            style={
-                                {
-                                    paddingLeft: 5
-                                }
-                            }
-                            onPress={
-                                () => {
-                                    this.props.navigation.openDrawer();
-                                }
-                            }
-                        />
-                    </View>
-
-                    <View style={
-                        {
-                            paddingLeft: 5,
-                            paddingRight: 5
-                        }
-                    }>
-                        <Picker
-                            selectedValue={this.state.selectedItem}
-                            style={
-                                {
-                                    width: 90,
-                                    color: '#fff'
-                                }
-                            }
-                            mode={"dropdown"}
-                            onValueChange={(itemValue, itemIndex) => this.setState({ selectedItem: itemValue })}>
-                            <Picker.Item label="Dipesh" value="dipesh" />
-                            <Picker.Item label="Amit" value="amit" />
-                        </Picker>
-                    </View>
-
-                    <View style={
-                        {
-                            paddingLeft: 5,
-                            paddingRight: 5
-                        }
-                    }>
-                        <Text
-                            style={
-                                {
-                                    color: '#fff',
-                                    fontSize: 15
-                                }
-                            }
-                            onPress={() => alert("Added!")}
-                        >
-                            Add Students
-                        </Text>
-                    </View>
-
-                    <View style={
-                        {
-                            paddingRight: 20
-                        }
-                    }>
-                        <Icon onPress={() => this.logOut()} name="md-settings" size={25} color="#fff" />
-                    </View>
-                </View>
-
                 {/* EACH SMALL SECTIONS */}
                 <View style={
                     {
@@ -347,7 +278,7 @@ class MessageScreen extends Component {
     }
 }
 
-const TeacherHomePageTabNavigator = createTabNavigator({
+const TeacherHomePageTabNavigator = createMaterialTopTabNavigator({
     Activities: {
         screen: HomeScreen
     },
@@ -396,7 +327,8 @@ const TeacherHomePageMain = createDrawerNavigator({
         screen: DiaperScreen
     }
 }, {
-        initialRouteName: 'Home'
+        initialRouteName: 'Home',
+        drawerLockMode: 'locked-closed'
     });
 
 // TEACHER HOME PAGE MAIN EXPORT

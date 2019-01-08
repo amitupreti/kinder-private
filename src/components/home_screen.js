@@ -57,7 +57,7 @@ class HomeScreen extends Component {
         <View
           style={{
             alignItems: "center",
-            marginTop: 200
+            marginTop: 100
           }}
         >
           <Image
