@@ -66,7 +66,9 @@ class SignInScreen extends Component {
           // CHECK THE LOGIN TYPE
           if (response.loginType == "parent") {
             // IF PARENT
-            alert("PARENT");
+
+            // STORE THE LOGIN DATA
+            this._storeData(response.loginEmail, response.loginId, response.loginType);
 
             this.props.navigation.navigate("ParentHomePage");
           } else if (response.loginType == "staff") {

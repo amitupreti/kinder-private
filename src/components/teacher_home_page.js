@@ -77,8 +77,6 @@ class HomeScreen extends Component {
 
             if (loginEmail !== null && loginId !== null && loginType !== null) {
                 // IF DATA AVAILABLE IN AsyncStorage
-
-
             }
         } catch (error) {
             throw error;
@@ -93,6 +91,10 @@ class HomeScreen extends Component {
         } catch (error) {
             throw error;
         }
+    }
+
+    logOut = () => {
+        this._removeData();
     }
 
     render() {
@@ -183,7 +185,7 @@ class HomeScreen extends Component {
                             paddingRight: 20
                         }
                     }>
-                        <Icon onPress={() => this._removeData()} name="md-settings" size={25} color="#fff" />
+                        <Icon onPress={() => this.logOut()} name="md-settings" size={25} color="#fff" />
                     </View>
                 </View>
 

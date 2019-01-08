@@ -28,7 +28,13 @@ class HomeScreen extends Component {
       const loginType = await AsyncStorage.getItem("loginType");
 
       if (loginEmail !== null && loginId !== null && loginType !== null) {
-        this.props.navigation.navigate("TeacherHomePage");
+        if (loginType === "parent") {
+          this.props.navigation.navigate("ParentHomePage");
+        } else if (loginType === "staff") {
+          this.props.navigation.navigate("TeacherHomePage");
+        } else {
+          alert("INVALID TYPE");
+        }
       }
     } catch (error) {
       throw error;

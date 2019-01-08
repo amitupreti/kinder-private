@@ -184,7 +184,7 @@ export class EachMilestone extends Component {
                         }
                         onPress={
                             () => {
-                                navigation.goBack()
+                                navigation.navigate("Milestone");
                             }
                         }
                     />
@@ -524,6 +524,107 @@ export class MilestoneScreen extends Component {
 export class ObservationScreen extends Component {
     constructor(props) {
         super(props);
+
+        this.state = {
+            students: [], // TAG STUDENTS
+
+            // INPUT SECTIONS
+            milestone: '',
+            time: '12:00',
+            imageSource: null,
+            notes: ''
+        };
+    }
+
+    componentDidMount = async () => {
+        const loginId = await AsyncStorage.getItem("loginId");
+
+        // GET ALL THE STUDENTS FOR LOGGED STAFF
+        fetch("http://192.168.1.143:3000/post/students", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ loginId })
+        })
+            .then(res => res.json())
+            .then(response => {
+
+                let students = [];
+
+                response.forEach(eachRow => {
+                    let studentName = eachRow.student_name;
+                    let studentId = eachRow.student_id;
+                    let studentSelected = false;
+
+                    let obj = { studentName, studentId, studentSelected };
+
+                    students.push(obj);
+                });
+
+                this.setState({ students });
+            })
+            .catch(error => alert("ERROR"));
+    }
+
+    // TAG STUDENTS
+    makeSelection = (studentId) => {
+        // MAKE SELECTION
+        let students = [...this.state.students];
+        students.forEach(eachStudent => {
+            if (eachStudent.studentId === studentId) {
+                eachStudent.studentSelected = !eachStudent.studentSelected;
+            }
+        });
+        this.setState({ students });
+    }
+
+    selectPhotoTapped = () => {
+        const options = {
+            noData: true
+        }
+        ImagePicker.launchImageLibrary(options, response => {
+            if (response.uri) {
+                // IF THE RESPONSE GETS THE IMAGE URI THEN SET THE STATE
+                this.setState({ imageSource: response });
+            }
+        });
+    }
+
+    // SAVE DATA TO DATABASE
+    saveData = async () => {
+        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/incident
+
+        const loginId = await AsyncStorage.getItem("loginId");
+
+        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/incident/',
+            {
+                Authorization: "Bearer access-token",
+                'Content-Type': 'multipart/form-data'
+            },
+            [
+                {
+                    name: 'image',
+                    filename: 'image.png',
+                    type: 'image/png',
+                    data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                },
+
+                {
+                    name: 'textdata',
+                    data: JSON.stringify({
+                        time: this.state.time,
+                        title: this.state.title,
+                        notes: this.state.notes,
+                        students: this.state.students,
+                        loginId
+                    })
+                }
+            ]).then((resp) => {
+                console.log(resp);
+            }).catch((err) => {
+                console.log(err);
+            });
     }
 
     render() {
@@ -583,9 +684,17 @@ export class ObservationScreen extends Component {
                                 flexWrap: 'wrap'
                             }
                         }>
-                            <KinderImage imageLink={BottleImage} imageTitle="Ram" />
-                            <KinderImage imageLink={DiaperImage} imageTitle="Shyam" />
-                            <KinderImage imageLink={IncidentImage} imageTitle="Hari" />
+                            {
+                                this.state.students.map((student, index) => (
+                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                        <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                        {
+                                            student.studentSelected &&
+                                            <Text style={styles.studentSelected}>SELECTED</Text>
+                                        }
+                                    </TouchableOpacity>
+                                ))
+                            }
                         </View>
                     </View>
 
@@ -657,8 +766,21 @@ export class ObservationScreen extends Component {
                                 name="md-camera"
                                 color="#16C"
                                 size={35}
+                                onPress={() => this.selectPhotoTapped()}
                             />
                         </View>
+                    </View>
+
+                    <View>
+                        {
+                            this.state.imageSource &&
+                            <Image source={{ uri: this.state.imageSource.uri }} style={
+                                {
+                                    width: 100,
+                                    height: 100
+                                }
+                            } />
+                        }
                     </View>
 
                     <Hr />
@@ -673,6 +795,7 @@ export class ObservationScreen extends Component {
                             <TextInput
                                 numberOfLines={1}
                                 placeholder="Type Notes ..."
+                                onChangeText={notes => this.setState({ notes })}
                             />
                         </View>
                     </View>
@@ -688,6 +811,7 @@ export class ObservationScreen extends Component {
                     onPress={
                         () => {
                             ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                            this.saveData();
                         }
                     }
                 >
@@ -715,7 +839,6 @@ export class ObservationScreen extends Component {
         );
     }
 }
-
 
 // Notice Section
 export class NoticeScreen extends Component {
@@ -1655,12 +1778,125 @@ export class MilkScreen extends Component {
                 { id: 0, active: true, name: 'Ounces' },
                 { id: 1, active: false, name: 'Litre' },
                 { id: 2, active: false, name: 'ml' }
-            ]
+            ],
+
+            // FOR SENDING DATA
+            students: [], // TAG STUDENTS
+
+            // INPUT SECTIONS
+            imageSource: null,
+            notes: '',
+            time: '12:00'
         }
     }
 
+    componentDidMount = async () => {
+        const loginId = await AsyncStorage.getItem("loginId");
+
+        // GET ALL THE STUDENTS FOR LOGGED STAFF
+        fetch("http://192.168.1.143:3000/post/students", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ loginId })
+        })
+            .then(res => res.json())
+            .then(response => {
+
+                let students = [];
+
+                response.forEach(eachRow => {
+                    let studentName = eachRow.student_name;
+                    let studentId = eachRow.student_id;
+                    let studentSelected = false;
+
+                    let obj = { studentName, studentId, studentSelected };
+
+                    students.push(obj);
+                });
+
+                this.setState({ students });
+            })
+            .catch(error => alert("ERROR"));
+    }
+
+    // TAG STUDENTS
+    makeSelection = (studentId) => {
+        // MAKE SELECTION
+        let students = [...this.state.students];
+        students.forEach(eachStudent => {
+            if (eachStudent.studentId === studentId) {
+                eachStudent.studentSelected = !eachStudent.studentSelected;
+            }
+        });
+        this.setState({ students });
+    }
+
+    // SAVE DATA TO DATABASE
+    saveData = async () => {
+        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/milk
+
+        const loginId = await AsyncStorage.getItem("loginId");
+
+        const volOfMilk = this.state.volOfMilk.filter(eachOption => {
+            return eachOption['active'];
+        });
+
+        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/milk/',
+            {
+                Authorization: "Bearer access-token",
+                'Content-Type': 'multipart/form-data'
+            },
+            [
+                {
+                    name: 'image',
+                    filename: 'image.png',
+                    type: 'image/png',
+                    data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                },
+
+                {
+                    name: 'textdata',
+                    data: JSON.stringify({
+                        notes: this.state.notes,
+                        students: this.state.students,
+                        time: this.state.time,
+                        volOfMilk,
+                        loginId
+                    })
+                }
+            ]).then((resp) => {
+                console.log(resp);
+            }).catch((err) => {
+                console.log(err);
+            });
+    }
+
+    selectPhotoTapped = () => {
+        const options = {
+            noData: true
+        }
+        ImagePicker.launchImageLibrary(options, response => {
+            if (response.uri) {
+                // IF THE RESPONSE GETS THE IMAGE URI THEN SET THE STATE
+                this.setState({ imageSource: response });
+            }
+        });
+    }
+
     highlightOption = (itemId) => {
-        alert(itemId);
+        let volOfMilk = [...this.state.volOfMilk];
+
+        volOfMilk.forEach(eachOption => {
+            if (itemId === eachOption['id']) {
+                eachOption['active'] = true;
+            } else {
+                eachOption['active'] = false;
+            }
+        });
+
+        this.setState({ volOfMilk });
     }
 
     render() {
@@ -1722,9 +1958,17 @@ export class MilkScreen extends Component {
                                 flexWrap: 'wrap'
                             }
                         }>
-                            <KinderImage imageLink={BottleImage} imageTitle="Ram" />
-                            <KinderImage imageLink={DiaperImage} imageTitle="Shyam" />
-                            <KinderImage imageLink={IncidentImage} imageTitle="Hari" />
+                            {
+                                this.state.students.map((student, index) => (
+                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                        <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                        {
+                                            student.studentSelected &&
+                                            <Text style={styles.studentSelected}>SELECTED</Text>
+                                        }
+                                    </TouchableOpacity>
+                                ))
+                            }
                         </View>
                     </View>
 
@@ -1771,7 +2015,7 @@ export class MilkScreen extends Component {
                                         itemStyle = this.state.styleOptions.unhighlightOptions;
                                     }
                                     return (
-                                        <TouchableOpacity onPress={() => false} key={item.id} style={{
+                                        <TouchableOpacity onPress={() => this.highlightOption(item.id)} key={item.id} style={{
                                             flex: 1
                                         }}>
                                             <View style={[styles.options, { backgroundColor: itemStyle.backgroundColor }]}>
@@ -1802,8 +2046,21 @@ export class MilkScreen extends Component {
                                 name="md-camera"
                                 size={35}
                                 color="#000"
+                                onPress={() => this.selectPhotoTapped()}
                             />
                         </View>
+                    </View>
+
+                    <View>
+                        {
+                            this.state.imageSource &&
+                            <Image source={{ uri: this.state.imageSource.uri }} style={
+                                {
+                                    width: 100,
+                                    height: 100
+                                }
+                            } />
+                        }
                     </View>
 
                     <Hr />
@@ -1818,6 +2075,7 @@ export class MilkScreen extends Component {
                             <TextInput
                                 numberOfLines={1}
                                 placeholder="Type Optional Notes ..."
+                                onChangeText={notes => this.setState({ notes })}
                             />
                         </View>
                     </View>
@@ -1833,6 +2091,7 @@ export class MilkScreen extends Component {
                     onPress={
                         () => {
                             ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                            this.saveData();
                         }
                     }
                 >
@@ -1862,6 +2121,108 @@ export class MilkScreen extends Component {
 
 // Nap Screen
 export class NapScreen extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            // FOR SENDING DATA
+            students: [], // TAG STUDENTS
+
+            // INPUT SECTIONS
+            imageSource: null,
+            notes: ''
+        }
+    }
+
+    componentDidMount = async () => {
+        const loginId = await AsyncStorage.getItem("loginId");
+
+        // GET ALL THE STUDENTS FOR LOGGED STAFF
+        fetch("http://192.168.1.143:3000/post/students", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ loginId })
+        })
+            .then(res => res.json())
+            .then(response => {
+
+                let students = [];
+
+                response.forEach(eachRow => {
+                    let studentName = eachRow.student_name;
+                    let studentId = eachRow.student_id;
+                    let studentSelected = false;
+
+                    let obj = { studentName, studentId, studentSelected };
+
+                    students.push(obj);
+                });
+
+                this.setState({ students });
+            })
+            .catch(error => alert("ERROR"));
+    }
+
+    // TAG STUDENTS
+    makeSelection = (studentId) => {
+        // MAKE SELECTION
+        let students = [...this.state.students];
+        students.forEach(eachStudent => {
+            if (eachStudent.studentId === studentId) {
+                eachStudent.studentSelected = !eachStudent.studentSelected;
+            }
+        });
+        this.setState({ students });
+    }
+
+    selectPhotoTapped = () => {
+        const options = {
+            noData: true
+        }
+        ImagePicker.launchImageLibrary(options, response => {
+            if (response.uri) {
+                // IF THE RESPONSE GETS THE IMAGE URI THEN SET THE STATE
+                this.setState({ imageSource: response });
+            }
+        });
+    }
+
+    // SAVE DATA TO DATABASE
+    saveData = async () => {
+        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/nap
+
+        const loginId = await AsyncStorage.getItem("loginId");
+
+        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/nap/',
+            {
+                Authorization: "Bearer access-token",
+                'Content-Type': 'multipart/form-data'
+            },
+            [
+                {
+                    name: 'image',
+                    filename: 'image.png',
+                    type: 'image/png',
+                    data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                },
+
+                {
+                    name: 'textdata',
+                    data: JSON.stringify({
+                        notes: this.state.notes,
+                        students: this.state.students,
+                        loginId
+                    })
+                }
+            ]).then((resp) => {
+                console.log(resp);
+            }).catch((err) => {
+                console.log(err);
+            });
+    }
+
     render() {
 
         return (
@@ -1922,9 +2283,17 @@ export class NapScreen extends Component {
                                 flexWrap: 'wrap'
                             }
                         }>
-                            <KinderImage imageLink={BottleImage} imageTitle="Ram" />
-                            <KinderImage imageLink={DiaperImage} imageTitle="Shyam" />
-                            <KinderImage imageLink={IncidentImage} imageTitle="Hari" />
+                            {
+                                this.state.students.map((student, index) => (
+                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                        <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                        {
+                                            student.studentSelected &&
+                                            <Text style={styles.studentSelected}>SELECTED</Text>
+                                        }
+                                    </TouchableOpacity>
+                                ))
+                            }
                         </View>
                     </View>
 
@@ -1945,8 +2314,21 @@ export class NapScreen extends Component {
                                 name="md-camera"
                                 size={35}
                                 color="#000"
+                                onPress={() => this.selectPhotoTapped()}
                             />
                         </View>
+                    </View>
+
+                    <View>
+                        {
+                            this.state.imageSource &&
+                            <Image source={{ uri: this.state.imageSource.uri }} style={
+                                {
+                                    width: 100,
+                                    height: 100
+                                }
+                            } />
+                        }
                     </View>
 
                     <Hr />
@@ -1961,6 +2343,7 @@ export class NapScreen extends Component {
                             <TextInput
                                 numberOfLines={1}
                                 placeholder="Type Optional Notes ..."
+                                onChangeText={notes => this.setState({ notes })}
                             />
                         </View>
                     </View>
@@ -1976,6 +2359,7 @@ export class NapScreen extends Component {
                     onPress={
                         () => {
                             ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                            this.saveData();
                         }
                     }
                 >
@@ -2165,11 +2549,107 @@ export class DiaperScreen extends Component {
             },
             diaperChanged: [
                 { id: 0, active: true, name: 'Changed' },
-                { id: 1, active: false, name: 'Did\'t Change' }
-            ]
+                { id: 1, active: false, name: 'Didnt Change' }
+            ],
+
+            // FOR SENDING DATA
+            students: [], // TAG STUDENTS
+
+            // INPUT SECTIONS
+            num_diapers: 0,
+            notes: ''
         }
     }
 
+    componentDidMount = async () => {
+        const loginId = await AsyncStorage.getItem("loginId");
+
+        // GET ALL THE STUDENTS FOR LOGGED STAFF
+        fetch("http://192.168.1.143:3000/post/students", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ loginId })
+        })
+            .then(res => res.json())
+            .then(response => {
+
+                let students = [];
+
+                response.forEach(eachRow => {
+                    let studentName = eachRow.student_name;
+                    let studentId = eachRow.student_id;
+                    let studentSelected = false;
+
+                    let obj = { studentName, studentId, studentSelected };
+
+                    students.push(obj);
+                });
+
+                this.setState({ students });
+            })
+            .catch(error => alert("ERROR"));
+    }
+
+    // TAG STUDENTS
+    makeSelection = (studentId) => {
+        // MAKE SELECTION
+        let students = [...this.state.students];
+        students.forEach(eachStudent => {
+            if (eachStudent.studentId === studentId) {
+                eachStudent.studentSelected = !eachStudent.studentSelected;
+            }
+        });
+        this.setState({ students });
+    }
+
+    highlightOptionChange = (itemId) => {
+        let diaperChanged = [...this.state.diaperChanged];
+
+        diaperChanged.forEach(eachOption => {
+            if (itemId === eachOption['id']) {
+                eachOption['active'] = true;
+            } else {
+                eachOption['active'] = false;
+            }
+        });
+
+        this.setState({ diaperChanged });
+    }
+
+    // SAVE DATA TO DATABASE
+    saveData = async () => {
+        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/diaper
+
+        const loginId = await AsyncStorage.getItem("loginId");
+
+        const diaperChanged = this.state.diaperChanged.filter(eachOption => {
+            return eachOption['active'];
+        });
+
+        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/diaper/',
+            {
+                Authorization: "Bearer access-token",
+                'Content-Type': 'multipart/form-data'
+            },
+            [
+                {
+                    name: 'textdata',
+                    data: JSON.stringify({
+                        notes: this.state.notes,
+                        students: this.state.students,
+                        diaperChanged,
+                        num_diapers: this.state.num_diapers,
+                        loginId
+                    })
+                }
+            ]).then((resp) => {
+                console.log(resp);
+            }).catch((err) => {
+                console.log(err);
+            });
+    }
 
     render() {
 
@@ -2231,9 +2711,17 @@ export class DiaperScreen extends Component {
                                 flexWrap: 'wrap'
                             }
                         }>
-                            <KinderImage imageLink={BottleImage} imageTitle="Ram" />
-                            <KinderImage imageLink={DiaperImage} imageTitle="Shyam" />
-                            <KinderImage imageLink={IncidentImage} imageTitle="Hari" />
+                            {
+                                this.state.students.map((student, index) => (
+                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                        <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                        {
+                                            student.studentSelected &&
+                                            <Text style={styles.studentSelected}>SELECTED</Text>
+                                        }
+                                    </TouchableOpacity>
+                                ))
+                            }
                         </View>
                     </View>
 
@@ -2252,7 +2740,7 @@ export class DiaperScreen extends Component {
                                     itemStyle = this.state.styleOptions.unhighlightOptions;
                                 }
                                 return (
-                                    <TouchableOpacity onPress={() => false} key={item.id} style={{
+                                    <TouchableOpacity onPress={() => this.highlightOptionChange(item.id)} key={item.id} style={{
                                         flex: 1
                                     }}>
                                         <View style={[styles.options, { backgroundColor: itemStyle.backgroundColor }]}>
@@ -2271,7 +2759,11 @@ export class DiaperScreen extends Component {
                             <Text style={styles.heading}>How many diapers changed?</Text>
                         </View>
                         <View>
-                            <TextInput keyboardType="numeric" placeholder="Number of Diapers" />
+                            <TextInput
+                                keyboardType="numeric"
+                                placeholder="Number of Diapers"
+                                onChangeText={num_diapers => this.setState({ num_diapers })}
+                            />
                         </View>
                     </View>
 
@@ -2287,6 +2779,7 @@ export class DiaperScreen extends Component {
                             <TextInput
                                 numberOfLines={1}
                                 placeholder="Type Optional Notes ..."
+                                onChangeText={notes => this.setState({ notes })}
                             />
                         </View>
                     </View>
@@ -2302,6 +2795,7 @@ export class DiaperScreen extends Component {
                     onPress={
                         () => {
                             ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                            this.saveData();
                         }
                     }
                 >

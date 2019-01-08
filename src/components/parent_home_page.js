@@ -8,16 +8,41 @@ import {
     Picker,
     TouchableOpacity,
     Dimensions,
-    StyleSheet
+    StyleSheet,
+    AsyncStorage
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/Ionicons';
 
-import DiaperImage from '../images/diaper.png';
 import BackgroundImage from '../../images/Background.jpg';
+
+// FOR IMAGES
+import BottleImage from '../images/bottle.jpg';
+import DiaperImage from '../images/diaper.png';
+import IncidentImage from '../images/incident.png';
+import MealImage from '../images/meal.png';
+import NapImage from '../images/nap.png';
+import NoticeImage from '../images/notice.png';
+import ObservationImage from '../images/observation.png';
+import CameraImage from '../images/photo.png';
+import PottyImage from '../images/potty.png';
+import VideoImage from '../images/video.png';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
+// DISPLAY IMAGES
+class CustomImage extends Component {
+
+    render() {
+        return (
+            <Image
+                source={
+                    { uri: 'http://192.168.1.143:3000/' + this.props.imageName }
+                }
+                style={styles.image} />
+        );
+    }
+}
 
 class ParentHomePageScreen extends Component {
     static navigationOptions = {
@@ -28,11 +53,126 @@ class ParentHomePageScreen extends Component {
         super(props);
 
         this.state = {
-            selectedItem: 'allactivities'
+            selectedItem: 'allactivities',
+
+            // FETCHED FROM SERVER
+            studentName: 'Loading...',
+            loginId: 0,
+
+            // ALL THE POSTS
+            notice: [],
+            incident: [],
+            meal: [],
+            milk: [],
+            nap: [],
+            diaper: [],
+
+            // SHOWING THE CATEGORIES
+            categories: [
+                { key: "notice", active: true },
+                { key: "incident", active: true },
+                { key: "meal", active: true },
+                { key: "milk", active: true },
+                { key: "nap", active: true },
+                { key: "diaper", active: true }
+            ]
         };
     }
 
+    componentDidMount = async () => {
+        try {
+            const loginId = await AsyncStorage.getItem("loginId");
+            this._getUserDetails();
+
+            // SET LOGIN ID OF STATE TO loginId
+            this.setState({ loginId });
+
+            // FETCH ALL DATA FROM SERVER
+            this.getAllData();
+
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    _getUserDetails = async () => {
+        // GET STUDENT NAME AND SET THE studentName
+        try {
+            const loginId = await AsyncStorage.getItem("loginId");
+
+            const response = await fetch("http://192.168.1.143:3000/parent/student/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    studentId: loginId
+                })
+            });
+            const responseJSON = await response.json();
+            const studentName = responseJSON['studentName'];
+
+            this.setState({ studentName });
+        } catch (error) {
+            throw err;
+        }
+    }
+
+    getAllData = async () => {
+        const { categories } = this.state;
+
+        let activeCategories = categories.filter(eachCategory => {
+            return eachCategory['active'];
+        });
+
+        activeCategories.forEach(async eachCategory => {
+            // FETCH ALL THE DATA FROM SERVER
+            fetch("http://192.168.1.143:3000/post/" + eachCategory.key + "/" + this.state.loginId)
+                .then(res => res.json())
+                .then(response => {
+                    this.setState({ [eachCategory.key]: response });
+                })
+                .catch(error => {
+                    throw error;
+                });
+        });
+    }
+
+    _removeData = async () => {
+        try {
+            await AsyncStorage.multiRemove(["loginEmail", "loginId", "loginType"], function (error) {
+                if (error) throw error;
+            });
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    filterData = (itemValue) => {
+        // SET THE PICKER VALUE TO SELECTED VALUE
+        this.setState({ selectedItem: itemValue });
+
+        // RESET THE CATEGORIES ACCORDING TO SELECTION
+        let categories = [...this.state.categories];
+
+        if (itemValue === "allactivities") {
+            categories.forEach(eachCategory => {
+                eachCategory['active'] = true;
+            });
+        } else {
+            categories.forEach(eachCategory => {
+                if (itemValue === eachCategory['key']) {
+                    eachCategory['active'] = true;
+                } else {
+                    eachCategory['active'] = false;
+                }
+            });
+            this.setState({ categories });
+        }
+    }
+
     render() {
+
         return (
             <View>
                 <StatusBar hidden={true} />
@@ -80,11 +220,15 @@ class ParentHomePageScreen extends Component {
                                             color: 'white',
                                             fontWeight: 'bold'
                                         }
-                                    }>Dipesh Rai</Text>
+                                    }>
+                                        {
+                                            this.state.studentName
+                                        }
+                                    </Text>
                                 </View>
 
                                 <View>
-                                    <TouchableOpacity>
+                                    <TouchableOpacity onPress={() => this._removeData()}>
                                         <View style={
                                             {
                                                 padding: 14,
@@ -133,122 +277,740 @@ class ParentHomePageScreen extends Component {
                                             }
                                         }
                                         mode={"dialog"}
-                                        onValueChange={(itemValue, itemIndex) => this.setState({ selectedItem: itemValue })}>
+                                        onValueChange={itemValue => {
+                                            this.filterData(itemValue);
+                                        }}>
                                         <Picker.Item label="All Activities" value="allactivities" />
-                                        <Picker.Item label="Photos" value="photos" />
-                                        <Picker.Item label="Observations" value="observations" />
                                         <Picker.Item label="Notice" value="notice" />
+                                        <Picker.Item label="Incident" value="incident" />
+                                        <Picker.Item label="Meal" value="meal" />
+                                        <Picker.Item label="Milk" value="milk" />
                                         <Picker.Item label="Nap" value="nap" />
-                                        <Picker.Item label="Food" value="food" />
+                                        <Picker.Item label="Diaper" value="diaper" />
                                     </Picker>
                                 </View>
                             </View>
                         </View>
 
                         <View>
-                            <View style={
-                                {
-                                    backgroundColor: '#FFF',
-                                    marginTop: 5,
-                                    padding: 20,
-                                    borderRadius: 5
-                                }
-                            }>
-                                <View style={
-                                    {
-                                        flexDirection: 'row',
-                                        justifyContent: 'space-between'
-                                    }
-                                }>
-                                    <View style={
-                                        {
-                                            flexDirection: 'row',
-                                            alignItems: 'center'
-                                        }
-                                    }>
-                                        <View>
-                                            <Image source={DiaperImage} style={
-                                                {
-                                                    width: 60,
-                                                    height: 60,
-                                                    borderRadius: 30
-                                                }
-                                            } />
-                                        </View>
-                                        <View style={
+
+                            {
+                                // IF THERE ARE ANY NOTICE THEN
+                                this.state.notice.length !== 0 &&
+                                this.state.categories[0]['active'] &&
+                                this.state.notice.map((eachNotice, index) => {
+                                    return (
+                                        <View key={index} style={
                                             {
-                                                paddingLeft: 10
+                                                backgroundColor: '#FFF',
+                                                marginTop: 5,
+                                                padding: 20,
+                                                borderRadius: 5
                                             }
                                         }>
-                                            <Text style={
+                                            <View style={
                                                 {
-                                                    fontSize: 20,
-                                                    color: '#16C',
-                                                    fontWeight: 'bold'
+                                                    flexDirection: 'row',
+                                                    justifyContent: 'space-between'
                                                 }
-                                            }>Notice</Text>
-                                            <Text>1:30 PM, 11 June</Text>
+                                            }>
+                                                <View style={
+                                                    {
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center'
+                                                    }
+                                                }>
+                                                    <View>
+                                                        <Image source={NoticeImage} style={
+                                                            {
+                                                                width: 60,
+                                                                height: 60,
+                                                                borderRadius: 30
+                                                            }
+                                                        } />
+                                                    </View>
+                                                    <View style={
+                                                        {
+                                                            paddingLeft: 10
+                                                        }
+                                                    }>
+                                                        <Text style={
+                                                            {
+                                                                fontSize: 20,
+                                                                color: '#16C',
+                                                                fontWeight: 'bold'
+                                                            }
+                                                        }>
+                                                            Notice
+                                                        </Text>
+                                                        <Text>
+                                                            {
+                                                                eachNotice['notice_time']
+                                                            }
+                                                        </Text>
+                                                    </View>
+                                                </View>
+
+                                                <View>
+                                                    <Icon name="md-bookmark"
+                                                        size={35}
+                                                        color="#777"
+                                                        style={
+                                                            {
+                                                                paddingLeft: 5
+                                                            }
+                                                        } />
+                                                </View>
+                                            </View>
+
+                                            <View>
+
+                                                <Text style={styles.title}>
+                                                    {
+                                                        eachNotice['notice_title']
+                                                    }
+                                                </Text>
+
+                                                <Text style={styles.description}>
+                                                    {
+                                                        eachNotice['notice_note']
+                                                    }
+                                                </Text>
+
+                                                <CustomImage imageName={eachNotice['notice_photo']} />
+                                            </View>
+
+                                            <View style={styles.buttonsContainer}>
+                                                <View style={styles.buttons}>
+                                                    <Text style={styles.buttontext}>
+                                                        <Icon name="md-download"
+                                                            size={30}
+                                                            color="#16C"
+                                                            style={
+                                                                {
+                                                                    paddingLeft: 5
+                                                                }
+                                                            } />
+                                                    </Text>
+                                                </View>
+
+                                                <View style={styles.buttons}>
+                                                    <Text style={styles.buttontext}>
+                                                        <Icon name="md-share"
+                                                            size={30}
+                                                            color="#16C"
+                                                            style={
+                                                                {
+                                                                    paddingLeft: 5
+                                                                }
+                                                            } />
+                                                    </Text>
+                                                </View>
+                                            </View>
+
                                         </View>
-                                    </View>
+                                    )
+                                })
+                            }
 
-                                    <View>
-                                        <Icon name="md-bookmark"
-                                            size={35}
-                                            color="#777"
-                                            style={
+                            {
+                                // IF THERE ARE ANY INCIDENT THEN
+                                this.state.incident.length !== 0 &&
+                                this.state.categories[1]['active'] &&
+                                this.state.incident.map((eachIncident, index) => {
+                                    return (
+                                        <View key={index} style={
+                                            {
+                                                backgroundColor: '#FFF',
+                                                marginTop: 5,
+                                                padding: 20,
+                                                borderRadius: 5
+                                            }
+                                        }>
+                                            <View style={
                                                 {
-                                                    paddingLeft: 5
+                                                    flexDirection: 'row',
+                                                    justifyContent: 'space-between'
                                                 }
-                                            } />
-                                    </View>
-                                </View>
-
-                                <View>
-
-                                    <Text style={styles.title}>
-                                        Fancy Dress Competition
-                                    </Text>
-
-                                    <Text style={styles.description}>
-                                        Tomorrow we have a fancy dress competition. Please get your toddler dress up.
-                                    </Text>
-
-                                    <Image
-                                        source={
-                                            BackgroundImage
-                                        }
-                                        style={styles.image} />
-                                </View>
-
-                                <View style={styles.buttonsContainer}>
-                                    <View style={styles.buttons}>
-                                        <Text style={styles.buttontext}>
-                                            <Icon name="md-download"
-                                                size={30}
-                                                color="#16C"
-                                                style={
+                                            }>
+                                                <View style={
                                                     {
-                                                        paddingLeft: 5
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center'
                                                     }
-                                                } />
-                                        </Text>
-                                    </View>
+                                                }>
+                                                    <View>
+                                                        <Image source={IncidentImage} style={
+                                                            {
+                                                                width: 60,
+                                                                height: 60,
+                                                                borderRadius: 30
+                                                            }
+                                                        } />
+                                                    </View>
+                                                    <View style={
+                                                        {
+                                                            paddingLeft: 10
+                                                        }
+                                                    }>
+                                                        <Text style={
+                                                            {
+                                                                fontSize: 20,
+                                                                color: '#16C',
+                                                                fontWeight: 'bold'
+                                                            }
+                                                        }>
+                                                            Incident
+                                                        </Text>
+                                                        <Text>
+                                                            {
+                                                                eachIncident['incident_time']
+                                                            }
+                                                        </Text>
+                                                    </View>
+                                                </View>
 
-                                    <View style={styles.buttons}>
-                                        <Text style={styles.buttontext}>
-                                            <Icon name="md-share"
-                                                size={30}
-                                                color="#16C"
-                                                style={
+                                                <View>
+                                                    <Icon name="md-bookmark"
+                                                        size={35}
+                                                        color="#777"
+                                                        style={
+                                                            {
+                                                                paddingLeft: 5
+                                                            }
+                                                        } />
+                                                </View>
+                                            </View>
+
+                                            <View>
+
+                                                <Text style={styles.title}>
                                                     {
-                                                        paddingLeft: 5
+                                                        eachIncident['incident_title']
                                                     }
-                                                } />
-                                        </Text>
-                                    </View>
-                                </View>
+                                                </Text>
 
-                            </View>
+                                                <Text style={styles.description}>
+                                                    {
+                                                        eachIncident['incident_note']
+                                                    }
+                                                </Text>
+
+                                                <CustomImage imageName={eachIncident['incident_photo']} />
+                                            </View>
+
+                                            <View style={styles.buttonsContainer}>
+                                                <View style={styles.buttons}>
+                                                    <Text style={styles.buttontext}>
+                                                        <Icon name="md-download"
+                                                            size={30}
+                                                            color="#16C"
+                                                            style={
+                                                                {
+                                                                    paddingLeft: 5
+                                                                }
+                                                            } />
+                                                    </Text>
+                                                </View>
+
+                                                <View style={styles.buttons}>
+                                                    <Text style={styles.buttontext}>
+                                                        <Icon name="md-share"
+                                                            size={30}
+                                                            color="#16C"
+                                                            style={
+                                                                {
+                                                                    paddingLeft: 5
+                                                                }
+                                                            } />
+                                                    </Text>
+                                                </View>
+                                            </View>
+
+                                        </View>
+                                    )
+                                })
+                            }
+
+                            {
+                                // IF THERE ARE ANY MEAL THEN
+                                this.state.meal.length !== 0 &&
+                                this.state.categories[2]['active'] &&
+                                this.state.meal.map((eachMeal, index) => {
+                                    return (
+                                        <View key={index} style={
+                                            {
+                                                backgroundColor: '#FFF',
+                                                marginTop: 5,
+                                                padding: 20,
+                                                borderRadius: 5
+                                            }
+                                        }>
+                                            <View style={
+                                                {
+                                                    flexDirection: 'row',
+                                                    justifyContent: 'space-between'
+                                                }
+                                            }>
+                                                <View style={
+                                                    {
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center'
+                                                    }
+                                                }>
+                                                    <View>
+                                                        <Image source={MealImage} style={
+                                                            {
+                                                                width: 60,
+                                                                height: 60,
+                                                                borderRadius: 30
+                                                            }
+                                                        } />
+                                                    </View>
+                                                    <View style={
+                                                        {
+                                                            paddingLeft: 10
+                                                        }
+                                                    }>
+                                                        <Text style={
+                                                            {
+                                                                fontSize: 20,
+                                                                color: '#16C',
+                                                                fontWeight: 'bold'
+                                                            }
+                                                        }>
+                                                            Meal
+                                                        </Text>
+                                                        <Text>
+                                                            {
+                                                                eachMeal['meal_time']
+                                                            }
+                                                        </Text>
+                                                    </View>
+                                                </View>
+
+                                                <View>
+                                                    <Icon name="md-bookmark"
+                                                        size={35}
+                                                        color="#777"
+                                                        style={
+                                                            {
+                                                                paddingLeft: 5
+                                                            }
+                                                        } />
+                                                </View>
+                                            </View>
+
+                                            <View>
+
+                                                <Text style={styles.title}>
+                                                    {
+                                                        eachMeal['meal_type']
+                                                    }
+                                                </Text>
+
+                                                <Text style={styles.description}>
+                                                    {
+                                                        eachMeal['meal_note']
+                                                    }
+                                                </Text>
+
+                                                <CustomImage imageName={eachMeal['meal_photo']} />
+                                            </View>
+
+                                            <View style={styles.buttonsContainer}>
+                                                <View style={styles.buttons}>
+                                                    <Text style={styles.buttontext}>
+                                                        <Icon name="md-download"
+                                                            size={30}
+                                                            color="#16C"
+                                                            style={
+                                                                {
+                                                                    paddingLeft: 5
+                                                                }
+                                                            } />
+                                                    </Text>
+                                                </View>
+
+                                                <View style={styles.buttons}>
+                                                    <Text style={styles.buttontext}>
+                                                        <Icon name="md-share"
+                                                            size={30}
+                                                            color="#16C"
+                                                            style={
+                                                                {
+                                                                    paddingLeft: 5
+                                                                }
+                                                            } />
+                                                    </Text>
+                                                </View>
+                                            </View>
+
+                                        </View>
+                                    )
+                                })
+                            }
+
+                            {
+                                // IF THERE ARE ANY MILK THEN
+                                this.state.milk.length !== 0 &&
+                                this.state.categories[3]['active'] &&
+                                this.state.milk.map((eachMilk, index) => {
+                                    return (
+                                        <View key={index} style={
+                                            {
+                                                backgroundColor: '#FFF',
+                                                marginTop: 5,
+                                                padding: 20,
+                                                borderRadius: 5
+                                            }
+                                        }>
+                                            <View style={
+                                                {
+                                                    flexDirection: 'row',
+                                                    justifyContent: 'space-between'
+                                                }
+                                            }>
+                                                <View style={
+                                                    {
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center'
+                                                    }
+                                                }>
+                                                    <View>
+                                                        <Image source={BottleImage} style={
+                                                            {
+                                                                width: 60,
+                                                                height: 60,
+                                                                borderRadius: 30
+                                                            }
+                                                        } />
+                                                    </View>
+                                                    <View style={
+                                                        {
+                                                            paddingLeft: 10
+                                                        }
+                                                    }>
+                                                        <Text style={
+                                                            {
+                                                                fontSize: 20,
+                                                                color: '#16C',
+                                                                fontWeight: 'bold'
+                                                            }
+                                                        }>
+                                                            Milk
+                                                        </Text>
+                                                        <Text>
+                                                            {
+                                                                eachMilk['milk_time']
+                                                            }
+                                                        </Text>
+                                                    </View>
+                                                </View>
+
+                                                <View>
+                                                    <Icon name="md-bookmark"
+                                                        size={35}
+                                                        color="#777"
+                                                        style={
+                                                            {
+                                                                paddingLeft: 5
+                                                            }
+                                                        } />
+                                                </View>
+                                            </View>
+
+                                            <View>
+
+                                                <Text style={styles.title}>
+                                                    {
+                                                        eachMilk['milk_vol']
+                                                    }
+                                                </Text>
+
+                                                <Text style={styles.description}>
+                                                    {
+                                                        eachMilk['milk_note']
+                                                    }
+                                                </Text>
+
+                                                <CustomImage imageName={eachMilk['milk_photo']} />
+                                            </View>
+
+                                            <View style={styles.buttonsContainer}>
+                                                <View style={styles.buttons}>
+                                                    <Text style={styles.buttontext}>
+                                                        <Icon name="md-download"
+                                                            size={30}
+                                                            color="#16C"
+                                                            style={
+                                                                {
+                                                                    paddingLeft: 5
+                                                                }
+                                                            } />
+                                                    </Text>
+                                                </View>
+
+                                                <View style={styles.buttons}>
+                                                    <Text style={styles.buttontext}>
+                                                        <Icon name="md-share"
+                                                            size={30}
+                                                            color="#16C"
+                                                            style={
+                                                                {
+                                                                    paddingLeft: 5
+                                                                }
+                                                            } />
+                                                    </Text>
+                                                </View>
+                                            </View>
+
+                                        </View>
+                                    )
+                                })
+                            }
+
+                            {
+                                // IF THERE ARE ANY NAP THEN
+                                this.state.nap.length !== 0 &&
+                                this.state.categories[4]['active'] &&
+                                this.state.nap.map((eachNap, index) => {
+                                    return (
+                                        <View key={index} style={
+                                            {
+                                                backgroundColor: '#FFF',
+                                                marginTop: 5,
+                                                padding: 20,
+                                                borderRadius: 5
+                                            }
+                                        }>
+                                            <View style={
+                                                {
+                                                    flexDirection: 'row',
+                                                    justifyContent: 'space-between'
+                                                }
+                                            }>
+                                                <View style={
+                                                    {
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center'
+                                                    }
+                                                }>
+                                                    <View>
+                                                        <Image source={BottleImage} style={
+                                                            {
+                                                                width: 60,
+                                                                height: 60,
+                                                                borderRadius: 30
+                                                            }
+                                                        } />
+                                                    </View>
+                                                    <View style={
+                                                        {
+                                                            paddingLeft: 10
+                                                        }
+                                                    }>
+                                                        <Text style={
+                                                            {
+                                                                fontSize: 20,
+                                                                color: '#16C',
+                                                                fontWeight: 'bold'
+                                                            }
+                                                        }>
+                                                            Nap
+                                                        </Text>
+                                                        <Text>
+                                                            {
+                                                                eachNap['nap_time']
+                                                            }
+                                                        </Text>
+                                                    </View>
+                                                </View>
+
+                                                <View>
+                                                    <Icon name="md-bookmark"
+                                                        size={35}
+                                                        color="#777"
+                                                        style={
+                                                            {
+                                                                paddingLeft: 5
+                                                            }
+                                                        } />
+                                                </View>
+                                            </View>
+
+                                            <View>
+
+                                                <Text style={styles.description}>
+                                                    {
+                                                        eachNap['nap_note']
+                                                    }
+                                                </Text>
+
+                                                <CustomImage imageName={eachNap['nap_photo']} />
+                                            </View>
+
+                                            <View style={styles.buttonsContainer}>
+                                                <View style={styles.buttons}>
+                                                    <Text style={styles.buttontext}>
+                                                        <Icon name="md-download"
+                                                            size={30}
+                                                            color="#16C"
+                                                            style={
+                                                                {
+                                                                    paddingLeft: 5
+                                                                }
+                                                            } />
+                                                    </Text>
+                                                </View>
+
+                                                <View style={styles.buttons}>
+                                                    <Text style={styles.buttontext}>
+                                                        <Icon name="md-share"
+                                                            size={30}
+                                                            color="#16C"
+                                                            style={
+                                                                {
+                                                                    paddingLeft: 5
+                                                                }
+                                                            } />
+                                                    </Text>
+                                                </View>
+                                            </View>
+
+                                        </View>
+                                    )
+                                })
+                            }
+
+                            {
+                                // IF THERE ARE ANY DIAPER THEN
+                                this.state.diaper.length !== 0 &&
+                                this.state.categories[5]['active'] &&
+                                this.state.diaper.map((eachDiaper, index) => {
+                                    return (
+                                        <View key={index} style={
+                                            {
+                                                backgroundColor: '#FFF',
+                                                marginTop: 5,
+                                                padding: 20,
+                                                borderRadius: 5
+                                            }
+                                        }>
+                                            <View style={
+                                                {
+                                                    flexDirection: 'row',
+                                                    justifyContent: 'space-between'
+                                                }
+                                            }>
+                                                <View style={
+                                                    {
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center'
+                                                    }
+                                                }>
+                                                    <View>
+                                                        <Image source={BottleImage} style={
+                                                            {
+                                                                width: 60,
+                                                                height: 60,
+                                                                borderRadius: 30
+                                                            }
+                                                        } />
+                                                    </View>
+                                                    <View style={
+                                                        {
+                                                            paddingLeft: 10
+                                                        }
+                                                    }>
+                                                        <Text style={
+                                                            {
+                                                                fontSize: 20,
+                                                                color: '#16C',
+                                                                fontWeight: 'bold'
+                                                            }
+                                                        }>
+                                                            Diaper
+                                                        </Text>
+                                                        <Text>
+                                                            {
+                                                                eachDiaper['diaper_time']
+                                                            }
+                                                        </Text>
+                                                    </View>
+                                                </View>
+
+                                                <View>
+                                                    <Icon name="md-bookmark"
+                                                        size={35}
+                                                        color="#777"
+                                                        style={
+                                                            {
+                                                                paddingLeft: 5
+                                                            }
+                                                        } />
+                                                </View>
+                                            </View>
+
+                                            <View>
+
+                                                <Text style={styles.description}>
+                                                    {
+                                                        eachDiaper['diaper_change']
+                                                    }
+                                                </Text>
+
+                                                <Text style={styles.description}>
+                                                    {
+                                                        eachDiaper['diaper_note']
+                                                    }
+                                                </Text>
+
+                                                <Text style={{
+                                                    backgroundColor: '#16C',
+                                                    color: 'white',
+                                                    borderRadius: 5,
+                                                    padding: 10,
+                                                    margin: 5
+                                                }}>
+                                                    {
+                                                        eachDiaper['diaper_num']
+                                                    }
+                                                </Text>
+                                            </View>
+
+                                            <View style={styles.buttonsContainer}>
+                                                <View style={styles.buttons}>
+                                                    <Text style={styles.buttontext}>
+                                                        <Icon name="md-download"
+                                                            size={30}
+                                                            color="#16C"
+                                                            style={
+                                                                {
+                                                                    paddingLeft: 5
+                                                                }
+                                                            } />
+                                                    </Text>
+                                                </View>
+
+                                                <View style={styles.buttons}>
+                                                    <Text style={styles.buttontext}>
+                                                        <Icon name="md-share"
+                                                            size={30}
+                                                            color="#16C"
+                                                            style={
+                                                                {
+                                                                    paddingLeft: 5
+                                                                }
+                                                            } />
+                                                    </Text>
+                                                </View>
+                                            </View>
+
+                                        </View>
+                                    )
+                                })
+                            }
                         </View>
                     </View>
                 </ScrollView>
