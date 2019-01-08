@@ -27,7 +27,6 @@ router.post("/", function (req, res, next) {
                 // IF FOUND INSIDE staff
                 res.json({
                     loginEmail: result[0]['staff_email'],
-                    loginId: result[0]['staff_admin_id'],
                     loginType: 'staff',
                     success: true
                 });
@@ -40,7 +39,6 @@ router.post("/", function (req, res, next) {
                         // IF FOUND INSIDE parent
                         res.json({
                             loginEmail: result[0]['parent_email'],
-                            loginId: result[0]['parent_admin_id'],
                             loginType: 'parent',
                             success: true
                         });

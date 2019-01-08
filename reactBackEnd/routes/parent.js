@@ -16,9 +16,9 @@ con.connect(err => {
 
 // GET NAME AND IMAGE OF A STUDENT FOR LOGGED PARENT
 router.post('/student', function (req, res, next) {
-  let studentId = req.body.studentId;
+  let studentEmail = req.body.studentEmail;
 
-  con.query("SELECT * FROM students WHERE student_id='" + studentId + "'", function (err, result, field) {
+  con.query("SELECT * FROM students WHERE student_parent_email='" + studentEmail + "'", function (err, result, field) {
     if (err) throw err;
 
     let studentName = result[0]['student_name'];

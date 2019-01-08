@@ -18,7 +18,75 @@ con.connect(err => {
 });
 
 router.get("/", function (req, res, next) {
-    res.send("POST PAGE");
+    res.status(200).json({ message: "POST PAGE" });
+});
+
+router.get("/getdate", function (req, res, next) {
+    // GET TODAYS DATE FOR ATTENDENCE
+    let date = new Date();
+    let addZeros = num => ("00" + String(num)).slice(-2);
+    let today = date.getFullYear() + '-' + addZeros(Number(date.getMonth()) + 1) + '-' + addZeros(date.getDate());
+    res.status(200).json({ today: String(today) });
+});
+
+// OBSERVATION
+router.get("/observation", function (req, res, next) {
+    // SEND THE OBSERVATION DATA
+    con.query("SELECT * FROM observation ORDER BY observation_id DESC", function (err, result, fields) {
+        if (err) throw err;
+        console.log(result);
+        res.status(200).json(result);
+    });
+});
+
+router.get("/observation/:student_email", function (req, res, next) {
+    let student_email = req.params.student_email;
+    // SEND THE OBSERVATION DATA
+    con.query("SELECT * FROM observation WHERE observation_student='" + student_email + "' ORDER BY observation_id DESC", function (err, result, fields) {
+        if (err) throw err;
+        console.log(result);
+        res.status(200).json(result);
+    });
+});
+
+router.post("/observation", function (req, res, next) {
+    var form = new formidable.IncomingForm();
+    form.parse(req, function (err, fields, files) {
+        if (err) throw err;
+
+        // FOR FILES
+
+        var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var shuffled = str.split('').sort(function () { return 0.5 - Math.random() }).join('');
+        var finalShuffled = shuffled.substring(0, 6);
+
+        var oldpath = files.image.path;
+        var newpath = path.join(__dirname, "uploaded_images", "image_" + finalShuffled + "_" + files.image.name);
+
+        var textData = JSON.parse(fields.textdata);
+        var imageName = "image_" + finalShuffled + "_" + files.image.name;
+
+        console.log(textData);
+
+        fs.rename(oldpath, newpath, function (err) {
+            if (err) throw err;
+
+            // SEND TO ONLY SELECTED STUDENTS
+            let selected = textData['students'].filter(function (student) {
+                return student.studentSelected;
+            })
+
+            selected.forEach(eachStudent => {
+                // UPDATE DATABASE
+                con.query("INSERT INTO observation (observation_student, observation_milestone, observation_time, observation_photo, observation_note, observation_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['milestone'] + "', '" + textData['time'] + "', '" + imageName + "','" + textData['notes'] + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
+                    if (err) throw err;
+                });
+            });
+
+        });
+
+        res.json({ message: "Observation Uploaded" });
+    });
 });
 
 // NOTICE
@@ -31,7 +99,7 @@ router.get("/notice", function (req, res, next) {
     });
 });
 
-router.get("/notice/:student_id", function (req, res, next) {
+router.get("/notice/:student_email", function (req, res, next) {
     // SEND THE NOTICE DATA
     con.query("SELECT * FROM notice ORDER BY notice_id DESC", function (err, result, fields) {
         if (err) throw err;
@@ -60,13 +128,13 @@ router.post("/notice", function (req, res, next) {
         fs.rename(oldpath, newpath, function (err) {
             if (err) throw err;
 
-            con.query("INSERT INTO notice (notice_title, notice_photo, notice_note, notice_uploaded_by) VALUES ('" + textData['title'] + "', '" + imageName + "', '" + textData['notes'] + "', '" + textData['loginId'] + "')", function (err, result, fields) {
+            con.query("INSERT INTO notice (notice_title, notice_photo, notice_note, notice_uploaded_by) VALUES ('" + textData['title'] + "', '" + imageName + "', '" + textData['notes'] + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
                 if (err) throw err;
-
-                res.json({ message: "Notice Uploaded" });
             });
 
         });
+
+        res.json({ message: "Notice Uploaded" });
     });
 });
 
@@ -80,10 +148,10 @@ router.get("/incident", function (req, res, next) {
     });
 });
 
-router.get("/incident/:student_id", function (req, res, next) {
-    let student_id = req.params.student_id;
+router.get("/incident/:student_email", function (req, res, next) {
+    let student_email = req.params.student_email;
     // GET INCIDENT DATA
-    con.query("SELECT * FROM incident WHERE incident_student='" + student_id + "' ORDER BY incident_id DESC", function (err, result, fields) {
+    con.query("SELECT * FROM incident WHERE incident_student='" + student_email + "' ORDER BY incident_id DESC", function (err, result, fields) {
         if (err) throw err;
 
         res.status(200).json(result);
@@ -117,7 +185,7 @@ router.post("/incident", function (req, res, next) {
 
             selected.forEach(eachStudent => {
                 // UPDATE DATABASE
-                con.query("INSERT INTO incident (incident_student, incident_title, incident_note, incident_photo, incident_time, incident_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['title'] + "', '" + textData['notes'] + "', '" + imageName + "','" + textData['time'] + "', '" + textData['loginId'] + "')", function (err, result, fields) {
+                con.query("INSERT INTO incident (incident_student, incident_title, incident_note, incident_photo, incident_time, incident_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['title'] + "', '" + textData['notes'] + "', '" + imageName + "','" + textData['time'] + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
                     if (err) throw err;
                 });
             });
@@ -138,10 +206,10 @@ router.get("/meal", function (req, res, next) {
     });
 });
 
-router.get("/meal/:student_id", function (req, res, next) {
-    let student_id = req.params.student_id;
+router.get("/meal/:student_email", function (req, res, next) {
+    let student_email = req.params.student_email;
     // GET MEAL DATA
-    con.query("SELECT * FROM meal WHERE meal_student='" + student_id + "' ORDER BY meal_id DESC", function (err, result, fields) {
+    con.query("SELECT * FROM meal WHERE meal_student='" + student_email + "' ORDER BY meal_id DESC", function (err, result, fields) {
         if (err) throw err;
 
         res.status(200).json(result);
@@ -175,7 +243,7 @@ router.post("/meal", function (req, res, next) {
 
             selected.forEach(eachStudent => {
                 // UPDATE DATABASE
-                con.query("INSERT INTO meal (meal_student, meal_type, meal_well, meal_photo, meal_note, meal_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['activeOption'][0]['name'] + "', '" + textData['howMuchOption'][0]['name'] + "', '" + imageName + "','" + textData['notes'] + "', '" + textData['loginId'] + "')", function (err, result, fields) {
+                con.query("INSERT INTO meal (meal_student, meal_type, meal_well, meal_photo, meal_note, meal_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['activeOption'][0]['name'] + "', '" + textData['howMuchOption'][0]['name'] + "', '" + imageName + "','" + textData['notes'] + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
                     if (err) throw err;
                 });
             });
@@ -196,10 +264,10 @@ router.get("/milk", function (req, res, next) {
     });
 });
 
-router.get("/milk/:student_id", function (req, res, next) {
-    let student_id = req.params.student_id;
+router.get("/milk/:student_email", function (req, res, next) {
+    let student_email = req.params.student_email;
     // GET MILK DATA
-    con.query("SELECT * FROM milk WHERE milk_student='" + student_id + "' ORDER BY milk_id DESC", function (err, result, fields) {
+    con.query("SELECT * FROM milk WHERE milk_student='" + student_email + "' ORDER BY milk_id DESC", function (err, result, fields) {
         if (err) throw err;
 
         res.status(200).json(result);
@@ -235,7 +303,7 @@ router.post("/milk", function (req, res, next) {
 
             selected.forEach(eachStudent => {
                 // UPDATE DATABASE
-                con.query("INSERT INTO milk (milk_student, milk_time, milk_vol, milk_photo, milk_note, milk_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['time'] + "', '" + textData['volOfMilk'][0]['name'] + "', '" + imageName + "','" + textData['notes'] + "', '" + textData['loginId'] + "')", function (err, result, fields) {
+                con.query("INSERT INTO milk (milk_student, milk_time, milk_vol, milk_photo, milk_note, milk_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['time'] + "', '" + textData['volOfMilk'][0]['name'] + "', '" + imageName + "','" + textData['notes'] + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
                     if (err) throw err;
                 });
             });
@@ -256,10 +324,10 @@ router.get("/nap", function (req, res, next) {
     });
 });
 
-router.get("/nap/:student_id", function (req, res, next) {
-    let student_id = req.params.student_id;
+router.get("/nap/:student_email", function (req, res, next) {
+    let student_email = req.params.student_email;
     // GET NAP DATA
-    con.query("SELECT * FROM nap WHERE nap_student='" + student_id + "' ORDER BY nap_id DESC", function (err, result, fields) {
+    con.query("SELECT * FROM nap WHERE nap_student='" + student_email + "' ORDER BY nap_id DESC", function (err, result, fields) {
         if (err) throw err;
 
         res.status(200).json(result);
@@ -293,7 +361,7 @@ router.post("/nap", function (req, res, next) {
 
             selected.forEach(eachStudent => {
                 // UPDATE DATABASE
-                con.query("INSERT INTO nap (nap_student, nap_photo, nap_note, nap_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + imageName + "', '" + textData['notes'] + "', '" + textData['loginId'] + "')", function (err, result, fields) {
+                con.query("INSERT INTO nap (nap_student, nap_photo, nap_note, nap_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + imageName + "', '" + textData['notes'] + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
                     if (err) throw err;
                 });
             });
@@ -314,10 +382,10 @@ router.get("/diaper", function (req, res, next) {
     });
 });
 
-router.get("/diaper/:student_id", function (req, res, next) {
-    let student_id = req.params.student_id;
+router.get("/diaper/:student_email", function (req, res, next) {
+    let student_email = req.params.student_email;
     // GET DIAPER DATA
-    con.query("SELECT * FROM diaper WHERE diaper_student='" + student_id + "' ORDER BY diaper_id DESC", function (err, result, fields) {
+    con.query("SELECT * FROM diaper WHERE diaper_student='" + student_email + "' ORDER BY diaper_id DESC", function (err, result, fields) {
         if (err) throw err;
 
         res.status(200).json(result);
@@ -338,7 +406,7 @@ router.post("/diaper", function (req, res, next) {
 
         selected.forEach(eachStudent => {
             // UPDATE DATABASE
-            con.query("INSERT INTO diaper (diaper_student, diaper_change, diaper_num, diaper_note, diaper_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['diaperChanged'][0]['name'] + "', '" + textData['num_diapers'] + "', '" + textData['notes'] + "', '" + textData['loginId'] + "')", function (err, result, fields) {
+            con.query("INSERT INTO diaper (diaper_student, diaper_change, diaper_num, diaper_note, diaper_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['diaperChanged'][0]['name'] + "', '" + textData['num_diapers'] + "', '" + textData['notes'] + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
                 if (err) throw err;
             });
         });
@@ -351,18 +419,20 @@ router.post("/diaper", function (req, res, next) {
 router.post("/students", function (req, res, next) {
     // GET THE STUDENTS RELATED TO THE TEACHER RELATED TO ROOM
 
-    const loginId = req.body.loginId;
+    const loginEmail = req.body.loginEmail;
 
-    con.query("SELECT * FROM admin_staff WHERE staff_admin_id='" + loginId + "'", function (err, result, fields) {
+    con.query("SELECT * FROM admin_staff WHERE staff_admin_email='" + loginEmail + "'", function (err, result, fields) {
         if (err) throw err;
 
         let roomId = result[0]['staff_room_id'];
 
         con.query("SELECT * FROM students WHERE student_room_id='" + roomId + "'", function (err, result, fields) {
             console.log(result);
+
             res.status(200).json(result);
         });
     });
+
 });
 
 module.exports = router;
