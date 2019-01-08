@@ -350,23 +350,24 @@ router.post("/nap", function (req, res, next) {
         var textData = JSON.parse(fields.textdata);
         var imageName = "image_" + finalShuffled + "_" + files.image.name;
 
+        console.log(textData);
         // UPLOAD IMAGE
-        fs.rename(oldpath, newpath, function (err) {
-            if (err) throw err;
+        // fs.rename(oldpath, newpath, function (err) {
+        //     if (err) throw err;
 
-            // SEND TO ONLY SELECTED STUDENTS
-            let selected = textData['students'].filter(function (student) {
-                return student.studentSelected;
-            })
+        //     // SEND TO ONLY SELECTED STUDENTS
+        //     let selected = textData['students'].filter(function (student) {
+        //         return student.studentSelected;
+        //     })
 
-            selected.forEach(eachStudent => {
-                // UPDATE DATABASE
-                con.query("INSERT INTO nap (nap_student, nap_photo, nap_note, nap_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + imageName + "', '" + textData['notes'] + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
-                    if (err) throw err;
-                });
-            });
+        //     selected.forEach(eachStudent => {
+        //         // UPDATE DATABASE
+        //         con.query("INSERT INTO nap (nap_student, nap_photo, nap_note, nap_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + imageName + "', '" + textData['notes'] + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
+        //             if (err) throw err;
+        //         });
+        //     });
 
-        });
+        // });
 
         res.json({ message: "Nap Uploaded" });
     });
