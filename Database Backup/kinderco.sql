@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 08, 2019 at 05:09 PM
+-- Generation Time: Jan 09, 2019 at 03:11 PM
 -- Server version: 10.1.21-MariaDB
 -- PHP Version: 7.1.2
 
@@ -46,10 +46,10 @@ INSERT INTO `admin_staff` (`staff_admin_id`, `staff_admin_email`, `staff_appoint
 -- --------------------------------------------------------
 
 --
--- Table structure for table `attendence`
+-- Table structure for table `attendance`
 --
 
-CREATE TABLE `attendence` (
+CREATE TABLE `attendance` (
   `attendance_id` int(11) NOT NULL,
   `attendance_student` varchar(300) NOT NULL,
   `attendance_date` date NOT NULL,
@@ -58,6 +58,14 @@ CREATE TABLE `attendence` (
   `attendance_checkedin` tinyint(1) NOT NULL,
   `attendance_checkedout` tinyint(1) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `attendance`
+--
+
+INSERT INTO `attendance` (`attendance_id`, `attendance_student`, `attendance_date`, `attendance_checkin_time`, `attendance_checkout_time`, `attendance_checkedin`, `attendance_checkedout`) VALUES
+(8, 'sujal@gmail.com', '2019-01-09', '12:00', '0', 1, 0),
+(9, 'a.u.aua937@gmail.com', '2019-01-09', '12:00', '0', 1, 0);
 
 -- --------------------------------------------------------
 
@@ -91,6 +99,13 @@ CREATE TABLE `incident` (
   `incident_uploaded_by` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+--
+-- Dumping data for table `incident`
+--
+
+INSERT INTO `incident` (`incident_id`, `incident_student`, `incident_title`, `incident_note`, `incident_photo`, `incident_time`, `incident_uploaded_by`) VALUES
+(1, 'a.u.aua937@gmail.com', 'Amit Upreti Watching movie', 'Amit is watching movie now', 'image_3J18PL_image.png', '12:00', 0);
+
 -- --------------------------------------------------------
 
 --
@@ -107,6 +122,16 @@ CREATE TABLE `meal` (
   `meal_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `meal_uploaded_by` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `meal`
+--
+
+INSERT INTO `meal` (`meal_id`, `meal_student`, `meal_type`, `meal_well`, `meal_photo`, `meal_note`, `meal_time`, `meal_uploaded_by`) VALUES
+(1, 'sujal@gmail.com', 'Launch', 'Ate Well', 'image_MDCRZW_image.png', 'Breakfast is eaten by sujal and rakesh', '2019-01-08 16:43:03', 0),
+(2, 'rupesh@gmail.com', 'Launch', 'Ate Well', 'image_MDCRZW_image.png', 'Breakfast is eaten by sujal and rakesh', '2019-01-08 16:43:03', 0),
+(3, 'sujal@gmail.com', 'Snack', 'Didnt Eat Well', 'image_OAY19P_image.png', 'Not ate well amit sathi', '2019-01-09 09:43:49', 0),
+(4, 'a.u.aua937@gmail.com', 'Snack', 'Didnt Eat Well', 'image_OAY19P_image.png', 'Not ate well amit sathi', '2019-01-09 09:43:49', 0);
 
 -- --------------------------------------------------------
 
@@ -246,7 +271,7 @@ CREATE TABLE `students` (
 
 INSERT INTO `students` (`student_id`, `student_name`, `student_age`, `student_parent_name`, `student_parent_email`, `student_school_id`, `student_room_id`, `student_profile_image`, `student_contact_number`, `student_address`, `student_allergies`, `student_dob`, `student_time_in`, `student_time_out`, `student_gender`, `student_mealtype`) VALUES
 (28, 'Sujal', '6', 'Dopes', 'sujal@gmail.com', 1, 20, '/images/routine.png', '984202020111', 'ku', 'hari', '2019-01-22', '01:16:00', '17:17:00', 'male', 'lunch'),
-(29, 'Amit', '3', 'Amit Upreti', 'a.u.aua937@gmail.com', 1, 18, '', '98765432', '', '', '0000-00-00', '00:00:00', '00:00:00', 'male', ''),
+(29, 'Amit', '3', 'Amit Upreti', 'a.u.aua937@gmail.com', 1, 20, '', '98765432', '', '', '0000-00-00', '00:00:00', '00:00:00', 'male', ''),
 (30, 'Rakesh', '2', 'Rupesh', 'rupesh@gmail.com', 1, 20, '', '98765321', '', '', '0000-00-00', '00:00:00', '00:00:00', '', '');
 
 --
@@ -260,9 +285,9 @@ ALTER TABLE `admin_staff`
   ADD PRIMARY KEY (`staff_admin_id`);
 
 --
--- Indexes for table `attendence`
+-- Indexes for table `attendance`
 --
-ALTER TABLE `attendence`
+ALTER TABLE `attendance`
   ADD PRIMARY KEY (`attendance_id`);
 
 --
@@ -336,10 +361,10 @@ ALTER TABLE `students`
 ALTER TABLE `admin_staff`
   MODIFY `staff_admin_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 --
--- AUTO_INCREMENT for table `attendence`
+-- AUTO_INCREMENT for table `attendance`
 --
-ALTER TABLE `attendence`
-  MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `attendance`
+  MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 --
 -- AUTO_INCREMENT for table `diaper`
 --
@@ -349,12 +374,12 @@ ALTER TABLE `diaper`
 -- AUTO_INCREMENT for table `incident`
 --
 ALTER TABLE `incident`
-  MODIFY `incident_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `incident_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 --
 -- AUTO_INCREMENT for table `meal`
 --
 ALTER TABLE `meal`
-  MODIFY `meal_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `meal_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 --
 -- AUTO_INCREMENT for table `milk`
 --

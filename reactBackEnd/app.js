@@ -17,6 +17,8 @@ var forgotPassword = require('./routes/forgotPassword');
 var postData = require('./routes/postData');
 // PARENT DATA
 var parentRouter = require('./routes/parent');
+// ATTENDANCE DATA
+var attendance = require('./routes/attendance');
 
 var app = express();
 
@@ -37,6 +39,7 @@ app.use('/createaccount', createAccount);
 app.use('/login', logIn);
 app.use('/forgotpassword', forgotPassword);
 app.use('/post', postData);
+app.use('/attendance', attendance);
 
 app.use(cors());
 

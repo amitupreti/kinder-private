@@ -20,7 +20,7 @@ router.post("/", function (req, res, next) {
         console.log("Connected");
 
         // CHECK INSIDE staff
-        con.query("SELECT * FROM staff WHERE staff_email='" + loginEmail + "' AND staff_password='" + loginPassword + "'", function (err, result, fields) {
+        con.query("SELECT * FROM staff WHERE staff_email='" + String(loginEmail).toLowerCase() + "' AND staff_password='" + loginPassword + "'", function (err, result, fields) {
             if (err) throw err;
 
             if (result.length) {

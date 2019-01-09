@@ -1,21 +1,21 @@
-import React, {Component} from 'react';
-import {Image, View, Text} from 'react-native';
+import React, { Component } from 'react';
+import { Image, View, Text } from 'react-native';
 
 export default class KinderImage extends Component {
     render() {
         return (
-            <View style= {
+            <View style={
                 {
                     width: 100,
                     marginTop: 10
                 }
             }>
                 <Image
-                    source = {
+                    source={
                         this.props.imageLink
                     }
 
-                    style = {
+                    style={
                         {
                             width: 80,
                             height: 80,

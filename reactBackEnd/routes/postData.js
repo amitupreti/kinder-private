@@ -21,14 +21,6 @@ router.get("/", function (req, res, next) {
     res.status(200).json({ message: "POST PAGE" });
 });
 
-router.get("/getdate", function (req, res, next) {
-    // GET TODAYS DATE FOR ATTENDENCE
-    let date = new Date();
-    let addZeros = num => ("00" + String(num)).slice(-2);
-    let today = date.getFullYear() + '-' + addZeros(Number(date.getMonth()) + 1) + '-' + addZeros(date.getDate());
-    res.status(200).json({ today: String(today) });
-});
-
 // OBSERVATION
 router.get("/observation", function (req, res, next) {
     // SEND THE OBSERVATION DATA
@@ -428,8 +420,6 @@ router.post("/students", function (req, res, next) {
         let roomId = result[0]['staff_room_id'];
 
         con.query("SELECT * FROM students WHERE student_room_id='" + roomId + "'", function (err, result, fields) {
-            console.log(result);
-
             res.status(200).json(result);
         });
     });

@@ -2,8 +2,7 @@ import React, { Component } from 'react';
 import {
     View,
     Text,
-    Picker,
-    StatusBar,
+    Button,
     TouchableOpacity,
     Dimensions,
     AsyncStorage,
@@ -125,8 +124,12 @@ class HomeScreen extends Component {
                 {/* EACH SMALL SECTIONS */}
                 <View style={
                     {
+                        marginTop: 10,
                         flexDirection: 'row',
-                        flexWrap: 'wrap'
+                        flexWrap: 'wrap',
+                        justifyContent: 'space-between',
+                        marginLeft: 10,
+                        marginRight: 10
                     }
                 }>
                     {
@@ -139,6 +142,26 @@ class HomeScreen extends Component {
                         })
                     }
                 </View>
+
+                {/* EMERGENCY BUTTON */}
+                <TouchableOpacity onPress={() => this._removeData()} style={
+                    {
+                        position: 'absolute',
+                        bottom: 80,
+                        right: 10
+                    }
+                }>
+                    <Text style={
+                        {
+                            backgroundColor: '#f42731',
+                            padding: 10,
+                            borderRadius: 5,
+                            color: '#FFF'
+                        }
+                    }>
+                        Log Out
+                    </Text>
+                </TouchableOpacity>
 
                 {/* EMERGENCY BUTTON */}
                 <TouchableOpacity style={
@@ -174,10 +197,20 @@ class AttendanceScreen extends Component {
 
         this.state = {
             students: [], // TAG STUDENTS
+
+            studentsCheckedIn: [], // TO GET STUDENTS CHECKED IN OR NOT
+            studentsCheckedOut: [], // TO GET STUDENTS CHECKED OUT
+
+            // INPUT FIELDS
+            time: '12:00'
         };
     }
 
-    componentDidMount = async () => {
+    componentDidMount = () => {
+        this.showStudents();
+    }
+
+    showStudents = async () => {
         try {
             const loginEmail = await AsyncStorage.getItem("loginEmail");
 
@@ -199,7 +232,26 @@ class AttendanceScreen extends Component {
                         let studentId = eachRow.student_id;
                         let studentSelected = false;
 
+                        // CHECK TODAYS ATTENDANCE WHETHER STUDENTS ARE CHECKED IN OR NOT
                         let obj = { studentName, studentId, studentSelected };
+
+                        fetch("http://192.168.1.143:3000/attendance/" + studentId)
+                            .then(res => res.json())
+                            .then(response => {
+                                if (response.length) {
+                                    if (response[0].attendance_checkedin === 1 && response[0].attendance_checkedout === 0) {
+                                        let studentsCheckedIn = [...this.state.studentsCheckedIn];
+                                        studentsCheckedIn.push(studentId);
+                                        studentsCheckedInFiltered = [...new Set(studentsCheckedIn)];
+                                        this.setState({ studentsCheckedIn: studentsCheckedInFiltered });
+                                    } else if (response[0].attendance_checkedin === 1 && response[0].attendance_checkedout === 1) {
+                                        let studentsCheckedOut = [...this.state.studentsCheckedOut];
+                                        studentsCheckedOut.push(studentId);
+                                        studentsCheckedOutFiltered = [...new Set(studentsCheckedOut)];
+                                        this.setState({ studentsCheckedOut: studentsCheckedOutFiltered });
+                                    }
+                                }
+                            });
 
                         students.push(obj);
                     });
@@ -224,6 +276,27 @@ class AttendanceScreen extends Component {
         this.setState({ students });
     }
 
+    check = async (type) => {
+        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/diaper
+
+        fetch("http://192.168.1.143:3000/attendance/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                students: this.state.students,
+                studentsCheckedIn: this.state.studentsCheckedIn,
+                type,
+                time: this.state.time
+            })
+        })
+            .then(res => res.json())
+            .then(response => {
+                this.showStudents();
+            })
+    }
+
     render() {
         return (
             <View>
@@ -235,7 +308,7 @@ class AttendanceScreen extends Component {
                     <View>
                         <Text style={styles.heading}>
                             Tag Students
-                    </Text>
+                        </Text>
 
                         <View style={
                             {
@@ -245,8 +318,28 @@ class AttendanceScreen extends Component {
                         }>
                             {
                                 this.state.students.map((student, index) => (
-                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                    <TouchableOpacity key={index} onPress={() => {
+                                        if (this.state.studentsCheckedOut.indexOf(student.studentId) !== -1) {
+                                            return false;
+                                        }
+                                        this.makeSelection(student.studentId);
+                                    }
+                                    }>
                                         <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                        {
+                                            this.state.studentsCheckedIn.indexOf(student.studentId) !== -1 &&
+                                            <Text style={styles.checkedIn}>
+                                                Checked In
+                                            </Text>
+                                        }
+
+                                        {
+                                            this.state.studentsCheckedOut.indexOf(student.studentId) !== -1 &&
+                                            <Text style={styles.checkedOut}>
+                                                Checked Out
+                                            </Text>
+                                        }
+
                                         {
                                             student.studentSelected &&
                                             <Text style={styles.studentSelected}>SELECTED</Text>
@@ -255,6 +348,28 @@ class AttendanceScreen extends Component {
                                 ))
                             }
                         </View>
+                    </View>
+                </View>
+
+                <View style={
+                    {
+                        marginTop: 40
+                    }
+                }>
+                    <View style={
+                        {
+                            padding: 10
+                        }
+                    }>
+                        <Button title="CHECK IN" color="#16C" onPress={() => this.check("checkIn")} />
+                    </View>
+
+                    <View style={
+                        {
+                            padding: 10
+                        }
+                    }>
+                        <Button title="CHECK OUT" color="#e23152" onPress={() => this.check("checkOut")} />
                     </View>
                 </View>
             </View>
@@ -364,5 +479,23 @@ const styles = StyleSheet.create({
     studentSelected: {
         textAlign: 'center',
         color: '#16C'
+    },
+    checkedIn: {
+        backgroundColor: '#16C',
+        color: '#FFF',
+        textAlign: 'center',
+        borderRadius: 20,
+        paddingTop: 5,
+        paddingBottom: 5,
+        margin: 2
+    },
+    checkedOut: {
+        backgroundColor: '#e23152',
+        color: '#FFF',
+        textAlign: 'center',
+        borderRadius: 20,
+        paddingTop: 5,
+        paddingBottom: 5,
+        margin: 2
     }
 });
