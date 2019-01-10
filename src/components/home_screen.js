@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { View, StatusBar, Image, StyleSheet, Dimensions, AsyncStorage } from "react-native";
+import { View, Image, StyleSheet, Dimensions, AsyncStorage } from "react-native";
 
 // Images
 import BackgroundImage from "../../images/Background.jpg";
@@ -43,7 +43,6 @@ class HomeScreen extends Component {
   render() {
     return (
       <View>
-        <StatusBar hidden={true} />
         <View style={styles.backgroundImageContainer}>
           <Image
             source={BackgroundImage}

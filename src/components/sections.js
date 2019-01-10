@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import {
     View,
     Text,
-    StatusBar,
     TouchableOpacity,
     TouchableHighlight,
     Dimensions,
@@ -12,7 +11,12 @@ import {
     ScrollView,
     Image,
     Modal,
-    AsyncStorage
+    AsyncStorage,
+    PermissionsAndroid,
+    StatusBar,
+    CameraRoll,
+    Button,
+    FlatList
 } from 'react-native';
 
 import ImagePicker from 'react-native-image-picker';
@@ -26,6 +30,10 @@ import KinderImage from './kinder_image';
 import BottleImage from '../images/bottle.jpg';
 import DiaperImage from '../images/diaper.png';
 import IncidentImage from '../images/incident.png';
+
+// CAMERA COMPONENT
+import Camera from 'react-native-camera';
+import { getAllExternalFilesDirs } from 'react-native-fs';
 
 // WIDTH AND HEIGHT OF SCREEN
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -59,7 +67,117 @@ export class EachMilestone extends Component {
                 { label: 'I', color: '#bc276f', title: 'Introduced', desc: 'The student was introduced to the milestone.' },
                 { label: 'D', color: '#520ba3', title: 'Developing', desc: 'The student is developing this milestone.' },
                 { label: 'M', color: '#1166CC', title: 'Mastered', desc: 'The student has mastered this milestone.' }
-            ]
+            ],
+
+            students: [], // STUDENTS AVAILABLE FOR LOGGED TEACHER / STAFF
+
+            studentMilestone: [], // MILESTONE FOR THE STUDENTS
+
+            selectedStudent: '',
+        }
+    }
+
+    componentDidMount = async () => {
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
+
+        // GET ALL THE STUDENTS FOR LOGGED STAFF
+        fetch("http://192.168.1.143:3000/post/students", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ loginEmail })
+        })
+            .then(res => res.json())
+            .then(response => {
+
+                let students = [];
+
+                response.forEach(eachRow => {
+                    let studentName = eachRow.student_name;
+                    let studentId = eachRow.student_parent_email;
+                    let studentSelected = false;
+
+                    let obj = { studentName, studentId, studentSelected };
+
+                    students.push(obj);
+                });
+
+                this.setState({ students });
+            })
+            .catch(error => alert("ERROR"));
+    }
+
+    getProgress = (studentId) => {
+
+        let contains = this.state.studentMilestone.filter(each => each['selectedStudent'] === studentId)
+
+        if (contains.length) {
+            return (
+                <View style={
+                    {
+                        alignSelf: 'center'
+                    }
+                }>
+                    <Text style={
+                        {
+                            fontSize: 20,
+                            color: '#FFF',
+                            padding: 20,
+                            backgroundColor: contains[0].color,
+                            borderRadius: 10
+                        }
+                    }>
+                        {contains[0].selectedLabel}
+                    </Text>
+                </View>
+            )
+        } else {
+            return (
+                <View style={
+                    {
+                        alignSelf: 'center',
+                        backgroundColor: '#d1d1d1',
+                        padding: 20,
+                        borderRadius: 10
+                    }
+                }>
+                    <Icon
+                        name="md-add"
+                        size={20}
+                        color="#fff"
+                    />
+                </View>
+            )
+        }
+    }
+
+    saveData = async () => {
+        // GETTING LABEL FROM NAVIGATION PROPS
+        let milestoneType = this.props.navigation.getParam('navigationData', 'NO-Data')['label'];
+
+        if (milestoneType !== undefined) {
+            const loginEmail = await AsyncStorage.getItem("loginEmail");
+
+            // SAVE THE SELECTED MILESTONES OF STUDENTS http://192.168.1.143:3000/post/milestone/
+            fetch("http://192.168.1.143:3000/post/milestone/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    studentMilestone: this.state.studentMilestone,
+                    loginEmail,
+                    milestoneType
+                })
+            })
+                .then(res => res.json())
+                .then(response => {
+                    console.log(response);
+                })
+                .catch(error => {
+                    console.log(error);
+                });
         }
     }
 
@@ -72,7 +190,7 @@ export class EachMilestone extends Component {
                     flex: 1
                 }
             }>
-                <StatusBar hidden={true} />
+
 
                 <Modal
                     animationType='slide'
@@ -121,7 +239,21 @@ export class EachMilestone extends Component {
                         {
                             this.state.progressIndicators.map((item, index) => {
                                 return (
-                                    <TouchableHighlight key={index}>
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            // LABEL THE PROGRESS INDICATOR FOR SELECTED
+                                            let label = item.label;
+                                            let studentMilestone = [...this.state.studentMilestone];
+
+                                            // SELECT BESIDE THE ALREADY SELECTED STUDENT
+                                            let SM = studentMilestone.filter(each => each.selectedStudent !== this.state.selectedStudent);
+                                            let SMNew = [...SM];
+                                            SMNew.push({ selectedLabel: label, selectedStudent: this.state.selectedStudent, color: item.color, title: item.title });
+
+                                            this.setState({ studentMilestone: SMNew, modalVisible: false });
+                                        }}
+                                        key={index}
+                                    >
                                         <View style={
                                             {
                                                 flexDirection: 'row',
@@ -159,7 +291,7 @@ export class EachMilestone extends Component {
                                                 <Text>{item.desc}</Text>
                                             </View>
                                         </View>
-                                    </TouchableHighlight>
+                                    </TouchableOpacity>
                                 );
                             })
                         }
@@ -199,7 +331,11 @@ export class EachMilestone extends Component {
                     </View>
                 </View>
 
-                <View>
+                <View style={
+                    {
+                        flex: 1
+                    }
+                }>
                     <View style={
                         {
                             flexDirection: 'row',
@@ -280,54 +416,58 @@ export class EachMilestone extends Component {
                     </View>
 
                     <ScrollView>
-                        <TouchableHighlight underlayColor='#E1E1E1' onPress={() => this.setState({ modalVisible: !this.state.modalVisible })}>
-                            <View style={
-                                {
-                                    padding: 20,
-                                    flexDirection: 'row',
-                                    justifyContent: 'space-between',
-                                    borderBottomColor: '#e1e1e1',
-                                    borderBottomWidth: 1
-                                }
-                            }>
-                                <View style={
-                                    {
-                                        flexDirection: 'row',
-                                        alignItems: 'center'
-                                    }
-                                }>
-                                    <Image style={
-                                        {
-                                            width: 80,
-                                            height: 80,
-                                            borderRadius: 50
-                                        }
-                                    } source={DiaperImage} />
-                                    <Text style={
-                                        {
-                                            fontSize: 22,
-                                            paddingLeft: 20,
-                                            fontWeight: 'bold'
-                                        }
-                                    }>Dipesh Rai</Text>
-                                </View>
+                        {
+                            this.state.students.map((eachStudent, index) => {
+                                return (
+                                    <TouchableHighlight key={index} underlayColor='#E1E1E1' onPress={() => {
+                                        this.setState({ selectedStudent: eachStudent['studentId'], modalVisible: true });
+                                        ToastAndroid.show(eachStudent['studentId'], ToastAndroid.SHORT);
+                                    }}>
+                                        <View style={
+                                            {
+                                                padding: 20,
+                                                flexDirection: 'row',
+                                                justifyContent: 'space-between',
+                                                borderBottomColor: '#e1e1e1',
+                                                borderBottomWidth: 1
+                                            }
+                                        }>
+                                            <View style={
+                                                {
+                                                    flexDirection: 'row',
+                                                    alignItems: 'center'
+                                                }
+                                            }>
+                                                <Image style={
+                                                    {
+                                                        width: 80,
+                                                        height: 80,
+                                                        borderRadius: 50
+                                                    }
+                                                } source={BottleImage} />
+                                                <Text style={
+                                                    {
+                                                        fontSize: 22,
+                                                        paddingLeft: 20,
+                                                        fontWeight: 'bold'
+                                                    }
+                                                }>
+                                                    {
+                                                        eachStudent['studentName']
+                                                    }
+                                                </Text>
+                                            </View>
 
-                                <View style={
-                                    {
-                                        alignSelf: 'center',
-                                        backgroundColor: '#d1d1d1',
-                                        padding: 20,
-                                        borderRadius: 10
-                                    }
-                                }>
-                                    <Icon
-                                        name="md-add"
-                                        size={20}
-                                        color="#fff"
-                                    />
-                                </View>
-                            </View>
-                        </TouchableHighlight>
+                                            {
+                                                this.getProgress(eachStudent['studentId'])
+                                            }
+                                        </View>
+                                    </TouchableHighlight>
+                                )
+                            })
+                        }
+
+                        <View style={{ height: 30 }}></View>
                     </ScrollView>
                 </View>
 
@@ -341,6 +481,7 @@ export class EachMilestone extends Component {
                     onPress={
                         () => {
                             ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                            this.saveData();
                         }
                     }
                 >
@@ -394,7 +535,7 @@ export class MilestoneScreen extends Component {
                     flex: 1
                 }
             }>
-                <StatusBar hidden={true} />
+
                 <View style={
                     {
                         flexDirection: 'row',
@@ -430,40 +571,45 @@ export class MilestoneScreen extends Component {
 
                 <View style={
                     {
-                        padding: 10
+                        paddingLeft: 10,
+                        paddingRight: 10,
+                        paddingBottom: 10,
+                        flex: 1
                     }
                 }>
-                    <View style={
-                        {
-                            flexDirection: 'row',
-                            borderBottomWidth: 1,
-                            borderBottomColor: '#a1a1a1',
-                            alignItems: 'center'
-                        }
-                    }>
-                        <TextInput
-                            style={
-                                {
-                                    flex: 1,
-                                    fontSize: 24
-                                }
-                            }
-                            placeholder="Search..." />
-
+                    { /*
                         <View style={
                             {
-                                borderLeftWidth: 1,
-                                borderLeftColor: '#A1A1A1',
-                                paddingLeft: 10
+                                flexDirection: 'row',
+                                borderBottomWidth: 1,
+                                borderBottomColor: '#a1a1a1',
+                                alignItems: 'center'
                             }
                         }>
-                            <Text style={
-                                {
-                                    fontSize: 20
+                            <TextInput
+                                style={
+                                    {
+                                        flex: 1,
+                                        fontSize: 24
+                                    }
                                 }
-                            }>FILTER</Text>
-                        </View>
-                    </View>
+                                placeholder="Search..." />
+
+                            <View style={
+                                {
+                                    borderLeftWidth: 1,
+                                    borderLeftColor: '#A1A1A1',
+                                    paddingLeft: 10
+                                }
+                            }>
+                                <Text style={
+                                    {
+                                        fontSize: 20
+                                    }
+                                }>FILTER</Text>
+                            </View>
+                        </View>*/
+                    }
 
                     <ScrollView>
                         {
@@ -634,7 +780,7 @@ export class ObservationScreen extends Component {
                     flex: 1
                 }
             }>
-                <StatusBar hidden={true} />
+
                 <View style={
                     {
                         flexDirection: 'row',
@@ -906,7 +1052,7 @@ export class NoticeScreen extends Component {
                     flex: 1
                 }
             }>
-                <StatusBar hidden={true} />
+
                 <View style={
                     {
                         flexDirection: 'row',
@@ -1169,7 +1315,7 @@ export class IncidentScreen extends Component {
                     flex: 1
                 }
             }>
-                <StatusBar hidden={true} />
+
                 <View style={
                     {
                         flexDirection: 'row',
@@ -1536,7 +1682,7 @@ export class MealScreen extends Component {
                     flex: 1
                 }
             }>
-                <StatusBar hidden={true} />
+
                 <View style={
                     {
                         flexDirection: 'row',
@@ -1572,72 +1718,37 @@ export class MealScreen extends Component {
 
                 <View style={
                     {
-                        padding: 10
+                        paddingLeft: 10,
+                        paddingRight: 10,
+                        flex: 1
                     }
                 }>
-                    {/* CODE FROM HERE */}
-                    <View>
-                        <Text style={styles.heading}>
-                            Tag Students
+                    <ScrollView>
+                        {/* CODE FROM HERE */}
+                        <View>
+                            <Text style={styles.heading}>
+                                Tag Students
                         </Text>
 
-                        <View style={
-                            {
-                                flexDirection: 'row',
-                                flexWrap: 'wrap'
-                            }
-                        }>
-                            {
-                                this.state.students.map((student, index) => (
-                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
-                                        <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
-                                        {
-                                            student.studentSelected &&
-                                            <Text style={styles.studentSelected}>SELECTED</Text>
-                                        }
-                                    </TouchableOpacity>
-                                ))
-                            }
-                        </View>
-                    </View>
-
-                    <View style={
-                        {
-                            flexDirection: 'row',
-                            marginTop: 10
-                        }
-                    }>
-                        {
-                            this.state.activeOptions.map(item => {
-                                let itemStyle = null;
-                                if (item.active === true) {
-                                    itemStyle = this.state.styleOptions.highlightOptions;
-                                } else {
-                                    itemStyle = this.state.styleOptions.unhighlightOptions;
+                            <View style={
+                                {
+                                    flexDirection: 'row',
+                                    flexWrap: 'wrap'
                                 }
-
-                                return (
-                                    <TouchableOpacity onPress={() => this.highlightOptionMealType(item.id)} key={item.id} style={{
-                                        flex: 1
-                                    }}>
-                                        <View style={[styles.options, { backgroundColor: itemStyle.backgroundColor }]}>
-                                            <Text style={[styles.optionsText, { color: itemStyle.color }]}>{item.name}</Text>
-                                        </View>
-                                    </TouchableOpacity>
-                                );
-                            })
-                        }
-                    </View>
-
-
-                    <View style={
-                        {
-                            marginTop: 20
-                        }
-                    }>
-                        <Text style={styles.heading}>
-                            How Much ?
-                        </Text>
+                            }>
+                                {
+                                    this.state.students.map((student, index) => (
+                                        <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                            <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                            {
+                                                student.studentSelected &&
+                                                <Text style={styles.studentSelected}>SELECTED</Text>
+                                            }
+                                        </TouchableOpacity>
+                                    ))
+                                }
+                            </View>
+                        </View>
 
                         <View style={
                             {
@@ -1646,15 +1757,16 @@ export class MealScreen extends Component {
                             }
                         }>
                             {
-                                this.state.howMuchOptions.map(item => {
+                                this.state.activeOptions.map(item => {
                                     let itemStyle = null;
                                     if (item.active === true) {
                                         itemStyle = this.state.styleOptions.highlightOptions;
                                     } else {
                                         itemStyle = this.state.styleOptions.unhighlightOptions;
                                     }
+
                                     return (
-                                        <TouchableOpacity onPress={() => this.highlightOptionHowMuch(item.id)} key={item.id} style={{
+                                        <TouchableOpacity onPress={() => this.highlightOptionMealType(item.id)} key={item.id} style={{
                                             flex: 1
                                         }}>
                                             <View style={[styles.options, { backgroundColor: itemStyle.backgroundColor }]}>
@@ -1665,59 +1777,97 @@ export class MealScreen extends Component {
                                 })
                             }
                         </View>
-                    </View>
 
-                    <Hr />
 
-                    <View style={
-                        {
-                            flexDirection: 'row',
-                            justifyContent: 'space-between'
-                        }
-                    }>
-                        <View>
-                            <Text style={
-                                styles.heading
-                            }>Photos</Text>
-                        </View>
-                        <View>
-                            <Icon
-                                name="md-camera"
-                                size={35}
-                                color="#000"
-                                onPress={() => this.selectPhotoTapped()}
-                            />
-                        </View>
-                    </View>
+                        <View style={
+                            {
+                                marginTop: 20
+                            }
+                        }>
+                            <Text style={styles.heading}>
+                                How Much ?
+                        </Text>
 
-                    <View>
-                        {
-                            this.state.imageSource &&
-                            <Image source={{ uri: this.state.imageSource.uri }} style={
+                            <View style={
                                 {
-                                    width: 100,
-                                    height: 100
+                                    flexDirection: 'row',
+                                    marginTop: 10
                                 }
-                            } />
-                        }
-                    </View>
-
-                    <Hr />
-
-                    <View>
-                        <View>
-                            <Text style={
-                                styles.heading
-                            }>Notes</Text>
+                            }>
+                                {
+                                    this.state.howMuchOptions.map(item => {
+                                        let itemStyle = null;
+                                        if (item.active === true) {
+                                            itemStyle = this.state.styleOptions.highlightOptions;
+                                        } else {
+                                            itemStyle = this.state.styleOptions.unhighlightOptions;
+                                        }
+                                        return (
+                                            <TouchableOpacity onPress={() => this.highlightOptionHowMuch(item.id)} key={item.id} style={{
+                                                flex: 1
+                                            }}>
+                                                <View style={[styles.options, { backgroundColor: itemStyle.backgroundColor }]}>
+                                                    <Text style={[styles.optionsText, { color: itemStyle.color }]}>{item.name}</Text>
+                                                </View>
+                                            </TouchableOpacity>
+                                        );
+                                    })
+                                }
+                            </View>
                         </View>
-                        <View>
-                            <TextInput
-                                numberOfLines={1}
-                                placeholder="Type Optional Notes ..."
-                                onChangeText={notes => this.setState({ notes })}
-                            />
+
+                        <Hr />
+
+                        <View style={
+                            {
+                                flexDirection: 'row',
+                                justifyContent: 'space-between'
+                            }
+                        }>
+                            <View>
+                                <Text style={
+                                    styles.heading
+                                }>Photos</Text>
+                            </View>
+                            <View>
+                                <Icon
+                                    name="md-camera"
+                                    size={35}
+                                    color="#000"
+                                    onPress={() => this.selectPhotoTapped()}
+                                />
+                            </View>
                         </View>
-                    </View>
+
+                        <View>
+                            {
+                                this.state.imageSource &&
+                                <Image source={{ uri: this.state.imageSource.uri }} style={
+                                    {
+                                        width: 100,
+                                        height: 100
+                                    }
+                                } />
+                            }
+                        </View>
+
+                        <Hr />
+
+                        <View style={{ marginBottom: 100 }}>
+                            <View>
+                                <Text style={
+                                    styles.heading
+                                }>Notes</Text>
+                            </View>
+                            <View>
+                                <TextInput
+                                    numberOfLines={1}
+                                    placeholder="Type Optional Notes ..."
+                                    onChangeText={notes => this.setState({ notes })}
+                                />
+                            </View>
+                        </View>
+                    </ScrollView>
                 </View>
 
                 <TouchableOpacity style={
@@ -1907,7 +2057,7 @@ export class MilkScreen extends Component {
                     flex: 1
                 }
             }>
-                <StatusBar hidden={true} />
+
                 <View style={
                     {
                         flexDirection: 'row',
@@ -2231,7 +2381,7 @@ export class NapScreen extends Component {
                     flex: 1
                 }
             }>
-                <StatusBar hidden={true} />
+
                 <View style={
                     {
                         flexDirection: 'row',
@@ -2397,7 +2547,7 @@ export class MedsScreen extends Component {
                     flex: 1
                 }
             }>
-                <StatusBar hidden={true} />
+
                 <View style={
                     {
                         flexDirection: 'row',
@@ -2659,7 +2809,7 @@ export class DiaperScreen extends Component {
                     flex: 1
                 }
             }>
-                <StatusBar hidden={true} />
+
                 <View style={
                     {
                         flexDirection: 'row',
@@ -2823,6 +2973,413 @@ export class DiaperScreen extends Component {
     }
 }
 
+// Photos Screen
+export class PhotoScreen extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            photos: [], // ALL PHOTOS WILL BE HERE
+            capturedPhotos: [], // PHOTOS TAKEN BY CAMERA
+
+            students: [], // TAG STUDENTS
+            modalVisible: false // DEFAULT MODAL VISIBILITY HIDDEN
+        };
+    }
+
+    componentDidMount = async () => {
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
+
+        let imageURL = this.props.navigation.getParam("imageURI", "NO_URL");
+
+        if (imageURL !== "NO_URL") {
+            let capturedPhotos = [...this.state.capturedPhotos, imageURL];
+            this.setState({ capturedPhotos });
+        }
+
+        // GET ALL THE STUDENTS FOR LOGGED STAFF
+        fetch("http://192.168.1.143:3000/post/students", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ loginEmail })
+        })
+            .then(res => res.json())
+            .then(response => {
+
+                let students = [];
+
+                response.forEach(eachRow => {
+                    let studentName = eachRow.student_name;
+                    let studentId = eachRow.student_parent_email;
+                    let studentSelected = false;
+
+                    let obj = { studentName, studentId, studentSelected };
+
+                    students.push(obj);
+                });
+
+                this.setState({ students });
+            })
+            .catch(error => alert("ERROR"));
+    }
+
+    // TAG STUDENTS
+    makeSelection = (studentId) => {
+        // MAKE SELECTION
+        let students = [...this.state.students];
+        students.forEach(eachStudent => {
+            if (eachStudent.studentId === studentId) {
+                eachStudent.studentSelected = !eachStudent.studentSelected;
+            }
+        });
+        this.setState({ students });
+    }
+
+    selectPhotoTapped = () => {
+        const options = {
+            noData: true
+        }
+        ImagePicker.launchImageLibrary(options, response => {
+            if (response.uri) {
+                // IF THE RESPONSE GETS THE IMAGE URI THEN SET THE STATE
+                let photos = [...this.state.photos, response];
+                this.setState({ photos });
+            }
+        });
+    }
+
+    // SAVE DATA TO DATABASE
+    saveData = async () => {
+        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/photos/
+
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
+
+        this.state.photos.map(eachPhoto => {
+            RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/photos/',
+                {
+                    Authorization: "Bearer access-token",
+                    'Content-Type': 'multipart/form-data'
+                },
+                [
+                    {
+                        name: 'image',
+                        filename: 'post.png',
+                        type: 'image/png',
+                        data: RNFetchBlob.wrap(eachPhoto.uri)
+                    },
+                    {
+                        name: 'textdata',
+                        data: JSON.stringify({
+                            loginEmail,
+                            students: this.state.students
+                        })
+                    }
+                ]).then((resp) => {
+                    console.log(resp);
+                }).catch((err) => {
+                    console.log(err);
+                });
+        });
+
+        this.state.capturedPhotos.map(eachPhoto => {
+            RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/photos/',
+                {
+                    Authorization: "Bearer access-token",
+                    'Content-Type': 'multipart/form-data'
+                },
+                [
+                    {
+                        name: 'image',
+                        filename: 'post.png',
+                        type: 'image/png',
+                        data: RNFetchBlob.wrap(eachPhoto)
+                    },
+                    {
+                        name: 'textdata',
+                        data: JSON.stringify({
+                            loginEmail,
+                            students: this.state.students
+                        })
+                    }
+                ]).then((resp) => {
+                    console.log(resp);
+                }).catch((err) => {
+                    console.log(err);
+                });
+        });
+
+        this.setState({ modalVisible: false, photos: [], capturedPhotos: [] });
+        this.props.navigation.navigate("Home");
+    }
+
+    render() {
+
+        return (
+            <View style={
+                {
+                    flex: 1
+                }
+            }>
+                <Modal
+                    visible={this.state.modalVisible}
+                    animationType={"slide"}
+                    onRequestClose={() => {
+                        this.setState({ modalVisible: false });
+                    }}
+                >
+                    {/* TAGGING THE STUDENTS MODAL VIEW */}
+                    <View style={
+                        {
+                            flex: 1
+                        }
+                    }>
+                        <Text style={[styles.heading, { padding: 10 }]}>
+                            Tag Students
+                        </Text>
+
+                        <ScrollView>
+                            <View style={
+                                {
+                                    flexDirection: 'row',
+                                    flexWrap: 'wrap'
+                                }
+                            }>
+                                {
+                                    this.state.students.map((student, index) => (
+                                        <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                            <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                            {
+                                                student.studentSelected &&
+                                                <Text style={styles.studentSelected}>SELECTED</Text>
+                                            }
+                                        </TouchableOpacity>
+                                    ))
+                                }
+                            </View>
+                        </ScrollView>
+
+                        <Button
+                            title={"SAVE PHOTO"}
+                            color={"#16C"}
+                            onPress={() => {
+                                ToastAndroid.show("PHOTO SAVED", ToastAndroid.SHORT);
+                                this.saveData();
+                            }}
+                        />
+                    </View>
+
+                </Modal>
+
+                <View style={
+                    {
+                        flexDirection: 'row',
+                        backgroundColor: '#dd5f40',
+                        padding: 10
+                    }
+                }>
+                    <Icon
+                        name="md-close"
+                        size={35}
+                        color="#fff"
+                        style={
+                            {
+                                paddingLeft: 10
+                            }
+                        }
+                        onPress={
+                            () => {
+                                this.props.navigation.navigate('Home');
+                            }
+                        }
+                    />
+                    <View>
+                        <Text style={
+                            {
+                                paddingLeft: 20,
+                                fontSize: 24,
+                                color: '#FFF'
+                            }
+                        }>Photo</Text>
+                    </View>
+                </View>
+
+                <View style={
+                    {
+                        padding: 10,
+                        flex: 1
+                    }
+                }>
+                    <View style={
+                        {
+                            marginBottom: 10
+                        }
+                    }>
+                        <Button
+                            title={"Capture Photo"}
+                            color={"#16C"}
+                            onPress={() => this.props.navigation.navigate("PhotoCapture")}
+                        />
+                    </View>
+
+                    <View style={
+                        {
+                            marginBottom: 10
+                        }
+                    }>
+                        <Button
+                            title={"Select Photo"}
+                            color={"#dd5f40"}
+                            onPress={() => this.selectPhotoTapped()}
+                        />
+                    </View>
+
+                    <ScrollView>
+                        {
+                            this.state.photos.length === 0 &&
+                            this.state.capturedPhotos.length === 0 &&
+                            <Text>No photos selected</Text>
+                        }
+
+                        {
+                            this.state.capturedPhotos.map((eachPhoto, index) => {
+                                return (
+                                    <Image
+                                        key={index}
+                                        source={{ uri: eachPhoto }} style={
+                                            {
+                                                width: '100%',
+                                                height: 300,
+                                                marginBottom: 20,
+                                                marginTop: 10
+                                            }
+                                        } />
+                                )
+                            })
+                        }
+
+                        {
+                            this.state.photos.map((eachPhoto, index) => {
+                                return (
+                                    <Image
+                                        key={index}
+                                        source={{ uri: eachPhoto.uri }} style={
+                                            {
+                                                width: '100%',
+                                                height: 300,
+                                                marginBottom: 20,
+                                                marginTop: 10
+                                            }
+                                        } />
+                                )
+                            })
+                        }
+                    </ScrollView>
+
+                    <View>
+                        <Button
+                            title={"Upload Photo"}
+                            color={"#1ea038"}
+                            onPress={() => {
+                                /* OPEN THE MODAL FOR TAGGING THE STUDENTS */
+                                this.setState({ modalVisible: true });
+                            }}
+                        />
+                    </View>
+                </View>
+            </View>
+        );
+    }
+}
+
+// Photo Capture Screen
+export class PhotoCaptureScreen extends Component {
+    componentDidMount = async () => {
+        try {
+            const granted = await PermissionsAndroid.request(
+                PermissionsAndroid.PERMISSIONS.CAMERA,
+                {
+                    'title': 'Camera Permission',
+                    'message': 'You can take photos'
+                }
+            );
+
+            if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                console.log("You can now use the camera");
+            } else {
+                console.log("Camera Permission Denied");
+            }
+
+        } catch (err) {
+            console.warn(err);
+        }
+    }
+
+    capturePhoto = async () => {
+        if (this.camera) {
+            const options = {};
+            this.camera.capture({ metadata: options })
+                .then(data => {
+                    let path = data.path;
+                    this.props.navigation.navigate("Photos", { imageURI: path });
+                })
+                .catch(error => {
+                    alert(error);
+                })
+        }
+    }
+
+    render() {
+
+        return (
+            <View style={
+                {
+                    flex: 1
+                }
+            }>
+                <StatusBar hidden={true} />
+                <Camera
+                    ref={ref => this.camera = ref}
+                    style={styles.preview}
+                    aspect={Camera.constants.Aspect.fill}
+                    captureAudio={false}
+                />
+
+                <View style={
+                    {
+                        position: 'absolute',
+                        bottom: 0,
+                        width: '100%',
+                        height: 75,
+                        backgroundColor: '#000',
+                        justifyContent: 'center',
+                        opacity: 0.8
+                    }
+                }>
+                    <TouchableOpacity onPress={() => {
+                        this.capturePhoto();
+                    }}>
+                        <Text style={
+                            {
+                                width: 60,
+                                height: 60,
+                                alignSelf: 'center',
+                                backgroundColor: '#FFF',
+                                textAlign: 'center',
+                                lineHeight: 65,
+                                borderRadius: 30
+                            }
+                        }>
+                            <Icon name="md-camera" size={35} color="#444" />
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    }
+}
+
 const styles = StyleSheet.create({
     heading: {
         fontSize: 20,
@@ -2841,5 +3398,8 @@ const styles = StyleSheet.create({
     studentSelected: {
         textAlign: 'center',
         color: '#16C'
+    },
+    preview: {
+        flex: 1
     }
 });

@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import {
     View,
     Text,
-    StatusBar,
     ScrollView,
     Image,
     Picker,
@@ -198,7 +197,6 @@ class ParentHomePageScreen extends Component {
 
         return (
             <View>
-                <StatusBar hidden={true} />
 
                 <ScrollView>
                     <View style={

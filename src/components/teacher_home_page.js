@@ -8,17 +8,21 @@ import {
     AsyncStorage,
     StyleSheet,
     BackHandler,
-    ToastAndroid
+    ToastAndroid,
+    Modal,
+    FlatList
 } from 'react-native';
 
 // COMPONENTS FOR INDIVIDIUAL SECTIONS
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-fa-icons';
+
 // WIDTH AND HEIGHT OF SCREEN
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-// CAMERA COMPONENT
-// import { RNCamera } from 'react-native-camera';
+// PHONE CALL
+import call from 'react-native-phone-call';
 
+// NAVIGATORS
 import { createDrawerNavigator, createMaterialTopTabNavigator } from 'react-navigation';
 
 // for images
@@ -44,7 +48,9 @@ import {
     DiaperScreen,
     ObservationScreen,
     MilestoneScreen,
-    EachMilestone
+    EachMilestone,
+    PhotoScreen,
+    PhotoCaptureScreen
 } from './sections';
 
 // Kinder Images
@@ -68,7 +74,11 @@ class HomeScreen extends Component {
                 { imageLink: BottleImage, imageTitle: 'Milk' },
                 { imageLink: NapImage, imageTitle: 'Nap' },
                 { imageLink: DiaperImage, imageTitle: 'Diaper' }
-            ]
+            ],
+
+            modalVisible: false, // HIDE THE MODAL VIEW BY DEFAULT
+
+            students: [] // STUDENTS AVAILABLE FOR LOGGED IN EMAIL
         }
     }
 
@@ -112,6 +122,40 @@ class HomeScreen extends Component {
         this._removeData();
     }
 
+    openEmergencyPanel = async () => {
+        try {
+            const loginEmail = await AsyncStorage.getItem("loginEmail");
+
+            this.setState({ modalVisible: true }); // OPEN THE MODAL
+
+            // FETCH THE STUDENTS FROM SERVER AT http://192.168.1.143:3000/post/students
+
+            fetch("http://192.168.1.143:3000/post/students", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ loginEmail })
+            })
+                .then(res => res.json())
+                .then(response => {
+                    let students = [...this.state.students];
+                    response.forEach((eachResponse, index) => {
+                        let studentName = eachResponse['student_name'];
+                        let studentContactNumber = eachResponse['student_contact_number'];
+                        let studentProfileImage = eachResponse['student_profile_image'];
+
+                        students.push({ studentName, studentContactNumber, studentProfileImage, key: String(index) });
+                    });
+
+                    this.setState({ students });
+                })
+                .catch(err => console.log(err));
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
     render() {
         this._retrieveData();
 
@@ -121,6 +165,96 @@ class HomeScreen extends Component {
                     flex: 1
                 }
             }>
+                <Modal
+                    animationType="slide"
+                    transparent={false}
+                    visible={this.state.modalVisible}
+                    onRequestClose={() => {
+                        this.setState({ modalVisible: false })
+                    }}
+                >
+                    <View style={{ flex: 1 }}>
+                        <View style={
+                            {
+                                position: 'absolute',
+                                left: 0,
+                                top: 0,
+                                width: '100%',
+                                height: 80
+                            }
+                        }>
+                            <Text style={
+                                {
+                                    fontSize: 30,
+                                    fontWeight: 'bold',
+                                    padding: 20,
+                                    borderBottomColor: '#E1E1E1',
+                                    borderBottomWidth: 1,
+                                    borderStyle: 'solid'
+                                }
+                            }>
+                                Contacts
+                            </Text>
+                        </View>
+
+                        <View style={{
+                            height: 80,
+                            width: '100%'
+                        }}></View>
+
+                        <FlatList
+                            data={this.state.students}
+                            renderItem={({ item }) => {
+                                return (
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            // CALLING THE EMERGENCY
+                                            const args = {
+                                                number: item.studentContactNumber
+                                            }
+
+                                            call(args).catch(console.error)
+                                        }}
+                                    >
+                                        <View style={
+                                            {
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
+                                                padding: 10,
+                                                borderBottomColor: '#F1F1F1',
+                                                borderBottomWidth: 1,
+                                                borderStyle: 'solid'
+                                            }
+                                        }>
+                                            <KinderImage imageLink={BottleImage} />
+
+                                            <View style={
+                                                {
+                                                    paddingBottom: 10,
+                                                    paddingLeft: 10
+                                                }
+                                            }>
+                                                <Text style={
+                                                    {
+                                                        fontSize: 22,
+                                                        fontWeight: 'bold',
+                                                        color: '#444'
+                                                    }
+                                                }>{item.studentName}</Text>
+                                                <Text style={
+                                                    {
+                                                        fontSize: 14
+                                                    }
+                                                }>{item.studentContactNumber}</Text>
+                                            </View>
+                                        </View>
+                                    </TouchableOpacity>
+                                )
+                            }}
+                        />
+                    </View>
+                </Modal>
+
                 {/* EACH SMALL SECTIONS */}
                 <View style={
                     {
@@ -164,7 +298,10 @@ class HomeScreen extends Component {
                 </TouchableOpacity>
 
                 {/* EMERGENCY BUTTON */}
-                <TouchableOpacity style={
+                <TouchableOpacity onPress={() => {
+                    this.openEmergencyPanel();
+                }
+                } style={
                     {
                         position: 'absolute',
                         bottom: 0,
@@ -179,10 +316,11 @@ class HomeScreen extends Component {
                             textAlign: 'center',
                             height: 70,
                             lineHeight: 70,
-                            width: SCREEN_WIDTH,
-
+                            width: SCREEN_WIDTH
                         }
                     }>
+                        <Icon name="ambulance" style={{ fontSize: 45, color: '#FFFFFF' }} />
+                        {"  "}
                         Emergency
                     </Text>
                 </TouchableOpacity>
@@ -404,7 +542,7 @@ const TeacherHomePageTabNavigator = createMaterialTopTabNavigator({
         screen: MessageScreen
     }
 }, {
-        initialRouteName: 'Attendance'
+        initialRouteName: 'Activities'
     });
 
 const TeacherHomePageMain = createDrawerNavigator({
@@ -440,6 +578,12 @@ const TeacherHomePageMain = createDrawerNavigator({
     },
     Diaper: {
         screen: DiaperScreen
+    },
+    PhotoCapture: {
+        screen: PhotoCaptureScreen
+    },
+    Photos: {
+        screen: PhotoScreen
     }
 }, {
         initialRouteName: 'Home',
