@@ -373,6 +373,64 @@ router.post("/nap", function (req, res, next) {
     });
 });
 
+// MEDICINE SECTION
+router.get("/medicine", function (req, res, next) {
+    // GET NAP DATA
+    con.query("SELECT * FROM medicine ORDER BY medicine_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
+router.get("/medicine/:student_email", function (req, res, next) {
+    let student_email = req.params.student_email;
+    // GET MEDICINE DATA
+    con.query("SELECT * FROM medicine WHERE medicine_student='" + student_email + "' ORDER BY medicine_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
+router.post("/medicine", function (req, res, next) {
+    var form = new formidable.IncomingForm();
+    form.parse(req, function (err, fields, files) {
+        if (err) throw err;
+
+        // FOR FILES
+        var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var shuffled = str.split('').sort(function () { return 0.5 - Math.random() }).join('');
+        var finalShuffled = shuffled.substring(0, 6);
+
+        var oldpath = files.image.path;
+        var newpath = path.join(__dirname, "uploaded_images", "image_" + finalShuffled + "_" + files.image.name);
+
+        var textData = JSON.parse(fields.textdata);
+        var imageName = "image_" + finalShuffled + "_" + files.image.name;
+
+        // UPLOAD IMAGE
+        fs.rename(oldpath, newpath, function (err) {
+            if (err) throw err;
+
+            // SEND TO ONLY SELECTED STUDENTS
+            let selected = textData['students'].filter(function (student) {
+                return student.studentSelected;
+            })
+
+            selected.forEach(eachStudent => {
+                // UPDATE DATABASE
+                con.query("INSERT INTO medicine (medicine_student, medicine_photo, medicine_note, medicine_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + imageName + "', '" + textData['notes'] + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
+                    if (err) throw err;
+                });
+            });
+
+        });
+
+        res.json({ message: "Medicine Uploaded" });
+    });
+});
+
 // DIAPER SECTION
 router.get("/diaper", function (req, res, next) {
     // GET DIAPER DATA
@@ -413,6 +471,51 @@ router.post("/diaper", function (req, res, next) {
         });
 
         res.json({ message: "Diaper Uploaded" });
+    });
+});
+
+// POTTY SECTION
+router.get("/potty", function (req, res, next) {
+    // GET POTTY DATA
+    con.query("SELECT * FROM potty ORDER BY potty_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
+router.get("/potty/:student_email", function (req, res, next) {
+    let student_email = req.params.student_email;
+    // GET POTTY DATA
+    con.query("SELECT * FROM potty WHERE potty_student='" + student_email + "' ORDER BY potty_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
+router.post("/potty", function (req, res, next) {
+    var form = new formidable.IncomingForm();
+    form.parse(req, function (err, fields, files) {
+        if (err) throw err;
+
+        var textData = JSON.parse(fields.textdata);
+
+        // SEND TO ONLY SELECTED STUDENTS
+        let selected = textData['students'].filter(function (student) {
+            return student.studentSelected;
+        });
+
+        console.log(textData);
+
+        selected.forEach(eachStudent => {
+            // UPDATE DATABASE
+            con.query("INSERT INTO potty (potty_student, potty_went, potty_note, potty_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + textData['pottyWent'][0]['name'] + "', '" + textData['notes'] + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
+                if (err) throw err;
+            });
+        });
+
+        res.json({ message: "Potty Uploaded" });
     });
 });
 
@@ -457,6 +560,7 @@ router.post("/photos", function (req, res, next) {
     });
 });
 
+// MILESTONE SECTION
 router.post("/milestone", function (req, res, next) {
     var studentMilestone = req.body.studentMilestone;
     var loginEmail = req.body.loginEmail;
