@@ -17,6 +17,15 @@ con.connect(err => {
     console.log("Connected");
 });
 
+const getToday = () => {
+    // GET TODAYS DATE FOR ATTENDENCE
+    let date = new Date();
+    let addZeros = num => ("00" + String(num)).slice(-2);
+    let today = date.getFullYear() + '-' + addZeros(Number(date.getMonth()) + 1) + '-' + addZeros(date.getDate());
+
+    return today;
+}
+
 router.get("/", function (req, res, next) {
     res.status(200).json({ message: "POST PAGE" });
 });
@@ -342,24 +351,23 @@ router.post("/nap", function (req, res, next) {
         var textData = JSON.parse(fields.textdata);
         var imageName = "image_" + finalShuffled + "_" + files.image.name;
 
-        console.log(textData);
         // UPLOAD IMAGE
-        // fs.rename(oldpath, newpath, function (err) {
-        //     if (err) throw err;
+        fs.rename(oldpath, newpath, function (err) {
+            if (err) throw err;
 
-        //     // SEND TO ONLY SELECTED STUDENTS
-        //     let selected = textData['students'].filter(function (student) {
-        //         return student.studentSelected;
-        //     })
+            // SEND TO ONLY SELECTED STUDENTS
+            let selected = textData['students'].filter(function (student) {
+                return student.studentSelected;
+            })
 
-        //     selected.forEach(eachStudent => {
-        //         // UPDATE DATABASE
-        //         con.query("INSERT INTO nap (nap_student, nap_photo, nap_note, nap_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + imageName + "', '" + textData['notes'] + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
-        //             if (err) throw err;
-        //         });
-        //     });
+            selected.forEach(eachStudent => {
+                // UPDATE DATABASE
+                con.query("INSERT INTO nap (nap_student, nap_photo, nap_note, nap_uploaded_by) VALUES ('" + eachStudent['studentId'] + "', '" + imageName + "', '" + textData['notes'] + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
+                    if (err) throw err;
+                });
+            });
 
-        // });
+        });
 
         res.json({ message: "Nap Uploaded" });
     });
@@ -408,6 +416,66 @@ router.post("/diaper", function (req, res, next) {
     });
 });
 
+// PHOTO SECTION
+router.post("/photos", function (req, res, next) {
+    var form = new formidable.IncomingForm();
+
+    form.parse(req, function (err, fields, files) {
+        if (err) throw err;
+
+        // FOR FILES
+        var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var shuffled = str.split('').sort(function () { return 0.5 - Math.random() }).join('');
+        var finalShuffled = shuffled.substring(0, 6);
+
+        var oldpath = files.image.path;
+        var newpath = path.join(__dirname, "uploaded_images", "image_" + finalShuffled + "_" + files.image.name);
+
+        var textData = JSON.parse(fields.textdata);
+        var imageName = "image_" + finalShuffled + "_" + files.image.name;
+
+        // UPLOAD IMAGE
+        fs.rename(oldpath, newpath, function (err) {
+            if (err) throw err;
+
+
+            // SEND TO ONLY SELECTED STUDENTS
+            let selected = textData['students'].filter(function (student) {
+                return student.studentSelected;
+            })
+
+            selected.forEach(eachStudent => {
+                con.query("INSERT INTO photos VALUES (NULL,'" + eachStudent['studentId'] + "', '" + imageName + "', '" + getToday() + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
+                    if (err) throw err;
+
+                    console.log("PHOTO INSERTED");
+                });
+            });
+        });
+
+        res.json({ message: "Nap Uploaded" });
+    });
+});
+
+router.post("/milestone", function (req, res, next) {
+    var studentMilestone = req.body.studentMilestone;
+    var loginEmail = req.body.loginEmail;
+    var milestoneType = req.body.milestoneType;
+
+
+    studentMilestone.forEach(eachMilestone => {
+
+        // SAVE THE MILESTONES IN DATABASE
+
+        con.query("INSERT INTO milestone VALUES (NULL, '" + eachMilestone['selectedStudent'] + "', '" + eachMilestone['title'] + "', '" + milestoneType + "', '" + loginEmail + "')", function (err, result, field) {
+            if (err) throw err;
+        });
+
+    });
+
+    res.status(200).json({ message: "OK" });
+});
+
 // TAG STUDENTS
 router.post("/students", function (req, res, next) {
     // GET THE STUDENTS RELATED TO THE TEACHER RELATED TO ROOM
@@ -420,6 +488,10 @@ router.post("/students", function (req, res, next) {
         let roomId = result[0]['staff_room_id'];
 
         con.query("SELECT * FROM students WHERE student_room_id='" + roomId + "'", function (err, result, fields) {
+            if (err) throw err;
+
+            console.log(result);
+
             res.status(200).json(result);
         });
     });
