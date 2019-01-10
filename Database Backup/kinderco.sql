@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 09, 2019 at 03:11 PM
+-- Generation Time: Jan 10, 2019 at 06:07 PM
 -- Server version: 10.1.21-MariaDB
 -- PHP Version: 7.1.2
 
@@ -65,7 +65,8 @@ CREATE TABLE `attendance` (
 
 INSERT INTO `attendance` (`attendance_id`, `attendance_student`, `attendance_date`, `attendance_checkin_time`, `attendance_checkout_time`, `attendance_checkedin`, `attendance_checkedout`) VALUES
 (8, 'sujal@gmail.com', '2019-01-09', '12:00', '0', 1, 0),
-(9, 'a.u.aua937@gmail.com', '2019-01-09', '12:00', '0', 1, 0);
+(9, 'a.u.aua937@gmail.com', '2019-01-09', '12:00', '0', 1, 0),
+(10, 'sujal@gmail.com', '2019-01-10', '12:00', '0', 1, 0);
 
 -- --------------------------------------------------------
 
@@ -136,6 +137,31 @@ INSERT INTO `meal` (`meal_id`, `meal_student`, `meal_type`, `meal_well`, `meal_p
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `milestone`
+--
+
+CREATE TABLE `milestone` (
+  `milestone_id` int(11) NOT NULL,
+  `milestone_student` varchar(300) NOT NULL,
+  `milestone_indicator` varchar(300) NOT NULL,
+  `milestone_type` varchar(300) NOT NULL,
+  `milestone_uploaded_by` varchar(300) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `milestone`
+--
+
+INSERT INTO `milestone` (`milestone_id`, `milestone_student`, `milestone_indicator`, `milestone_type`, `milestone_uploaded_by`) VALUES
+(1, 'sujal@gmail.com', 'Introduced', 'COG', 'aakashgautam107@gmail.com'),
+(2, 'a.u.aua937@gmail.com', 'Not Observed', 'COG', 'aakashgautam107@gmail.com'),
+(3, 'sujal@gmail.com', 'Not Observed', 'LIT', 'aakashgautam107@gmail.com'),
+(4, 'a.u.aua937@gmail.com', 'Observed', 'LIT', 'aakashgautam107@gmail.com'),
+(5, 'rupesh@gmail.com', 'Mastered', 'LIT', 'aakashgautam107@gmail.com');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `milk`
 --
 
@@ -148,6 +174,15 @@ CREATE TABLE `milk` (
   `milk_note` text NOT NULL,
   `milk_uploaded_by` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `milk`
+--
+
+INSERT INTO `milk` (`milk_id`, `milk_student`, `milk_time`, `milk_vol`, `milk_photo`, `milk_note`, `milk_uploaded_by`) VALUES
+(1, 'undefined', '12:00', 'Litre', 'image_HT3ABO_image.png', 'Hddhd', 0),
+(2, 'undefined', '12:00', 'Litre', 'image_HT3ABO_image.png', 'Hddhd', 0),
+(3, 'undefined', '12:00', 'Litre', 'image_HT3ABO_image.png', 'Hddhd', 0);
 
 -- --------------------------------------------------------
 
@@ -217,6 +252,37 @@ INSERT INTO `parent` (`parent_id`, `parent_admin_id`, `parent_email`, `parent_pa
 (1, 28, 'sujal@gmail.com', '1234', 5678),
 (2, 29, 'a.u.aua937@gmail.com', '1234', 5678),
 (3, 30, 'rupesh@gmail.com', '1234', 5678);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `photos`
+--
+
+CREATE TABLE `photos` (
+  `photo_id` int(11) NOT NULL,
+  `photo_student` varchar(300) NOT NULL,
+  `photo_name` text NOT NULL,
+  `photo_date` date NOT NULL,
+  `photo_uploaded_by` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `photos`
+--
+
+INSERT INTO `photos` (`photo_id`, `photo_student`, `photo_name`, `photo_date`, `photo_uploaded_by`) VALUES
+(1, '', 'image_29AMBZ_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
+(2, '', 'image_YTKCBA_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
+(3, '', 'image_2MV5NQ_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
+(4, '', 'image_HAY52U_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
+(5, '', 'image_0J2C6A_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
+(6, '', 'image_EAWOSZ_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
+(7, '', 'image_PTBOIW_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
+(8, '', 'image_AXBCPR_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
+(9, 'sujal@gmail.com', 'image_NHIW84_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
+(10, 'rupesh@gmail.com', 'image_NHIW84_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
+(11, 'a.u.aua937@gmail.com', 'image_VM5REO_post.png', '2019-01-10', 'aakashgautam107@gmail.com');
 
 -- --------------------------------------------------------
 
@@ -309,6 +375,12 @@ ALTER TABLE `meal`
   ADD PRIMARY KEY (`meal_id`);
 
 --
+-- Indexes for table `milestone`
+--
+ALTER TABLE `milestone`
+  ADD PRIMARY KEY (`milestone_id`);
+
+--
 -- Indexes for table `milk`
 --
 ALTER TABLE `milk`
@@ -340,6 +412,12 @@ ALTER TABLE `parent`
   ADD UNIQUE KEY `parent_admin_id` (`parent_admin_id`);
 
 --
+-- Indexes for table `photos`
+--
+ALTER TABLE `photos`
+  ADD PRIMARY KEY (`photo_id`);
+
+--
 -- Indexes for table `staff`
 --
 ALTER TABLE `staff`
@@ -364,7 +442,7 @@ ALTER TABLE `admin_staff`
 -- AUTO_INCREMENT for table `attendance`
 --
 ALTER TABLE `attendance`
-  MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 --
 -- AUTO_INCREMENT for table `diaper`
 --
@@ -381,10 +459,15 @@ ALTER TABLE `incident`
 ALTER TABLE `meal`
   MODIFY `meal_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 --
+-- AUTO_INCREMENT for table `milestone`
+--
+ALTER TABLE `milestone`
+  MODIFY `milestone_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+--
 -- AUTO_INCREMENT for table `milk`
 --
 ALTER TABLE `milk`
-  MODIFY `milk_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `milk_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 --
 -- AUTO_INCREMENT for table `nap`
 --
@@ -405,6 +488,11 @@ ALTER TABLE `observation`
 --
 ALTER TABLE `parent`
   MODIFY `parent_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+--
+-- AUTO_INCREMENT for table `photos`
+--
+ALTER TABLE `photos`
+  MODIFY `photo_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 --
 -- AUTO_INCREMENT for table `staff`
 --
