@@ -10,7 +10,8 @@ import {
     BackHandler,
     ToastAndroid,
     Modal,
-    FlatList
+    FlatList,
+    ScrollView
 } from 'react-native';
 
 // COMPONENTS FOR INDIVIDIUAL SECTIONS
@@ -36,6 +37,7 @@ import ObservationImage from '../images/observation.png';
 import CameraImage from '../images/photo.png';
 import PottyImage from '../images/potty.png';
 import VideoImage from '../images/video.png';
+import MedicineImage from '../images/medicine.png';
 
 // IMPORTING ALL SECTIONS
 import {
@@ -50,7 +52,8 @@ import {
     MilestoneScreen,
     EachMilestone,
     PhotoScreen,
-    PhotoCaptureScreen
+    PhotoCaptureScreen,
+    PottyScreen
 } from './sections';
 
 // Kinder Images
@@ -73,7 +76,9 @@ class HomeScreen extends Component {
                 { imageLink: MealImage, imageTitle: 'Meal' },
                 { imageLink: BottleImage, imageTitle: 'Milk' },
                 { imageLink: NapImage, imageTitle: 'Nap' },
-                { imageLink: DiaperImage, imageTitle: 'Diaper' }
+                { imageLink: DiaperImage, imageTitle: 'Diaper' },
+                { imageLink: MedicineImage, imageTitle: 'Meds' },
+                { imageLink: PottyImage, imageTitle: 'Potty' }
             ],
 
             modalVisible: false, // HIDE THE MODAL VIEW BY DEFAULT
@@ -256,46 +261,37 @@ class HomeScreen extends Component {
                 </Modal>
 
                 {/* EACH SMALL SECTIONS */}
-                <View style={
-                    {
-                        marginTop: 10,
-                        flexDirection: 'row',
-                        flexWrap: 'wrap',
-                        justifyContent: 'space-between',
-                        marginLeft: 10,
-                        marginRight: 10
-                    }
-                }>
-                    {
-                        this.state.sections.map((item, index) => {
-                            return (
-                                <TouchableOpacity key={index} onPress={() => this.props.navigation.navigate(item.imageTitle)}>
-                                    <KinderImage imageLink={item.imageLink} imageTitle={item.imageTitle} />
-                                </TouchableOpacity>
-                            )
-                        })
-                    }
-                </View>
-
-                {/* EMERGENCY BUTTON */}
-                <TouchableOpacity onPress={() => this._removeData()} style={
-                    {
-                        position: 'absolute',
-                        bottom: 80,
-                        right: 10
-                    }
-                }>
-                    <Text style={
+                <ScrollView>
+                    <View style={
                         {
-                            backgroundColor: '#f42731',
-                            padding: 10,
-                            borderRadius: 5,
-                            color: '#FFF'
+                            marginTop: 10,
+                            flexDirection: 'row',
+                            flexWrap: 'wrap',
+                            justifyContent: 'space-between',
+                            marginLeft: 10,
+                            marginRight: 10,
+                            marginBottom: 40
                         }
                     }>
-                        Log Out
-                    </Text>
-                </TouchableOpacity>
+                        {
+                            this.state.sections.map((item, index) => {
+                                return (
+                                    <TouchableOpacity key={index} onPress={() => this.props.navigation.navigate(item.imageTitle)}>
+                                        <KinderImage imageLink={item.imageLink} imageTitle={item.imageTitle} />
+                                    </TouchableOpacity>
+                                )
+                            })
+                        }
+
+                        <View style={{ width: 100, marginTop: 10, marginBottom: 10 }}>
+                        </View>
+                    </View>
+
+                    <View style={{ marginBottom: 80, padding: 20 }}>
+                        <Button title={"LOG OUT"} color={"#ef282c"} onPress={() => this._removeData()} />
+                    </View>
+
+                </ScrollView>
 
                 {/* EMERGENCY BUTTON */}
                 <TouchableOpacity onPress={() => {
@@ -575,6 +571,9 @@ const TeacherHomePageMain = createDrawerNavigator({
     },
     Meds: {
         screen: MedsScreen
+    },
+    Potty: {
+        screen: PottyScreen
     },
     Diaper: {
         screen: DiaperScreen

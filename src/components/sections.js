@@ -2539,6 +2539,108 @@ export class NapScreen extends Component {
 
 // Medicine Screen
 export class MedsScreen extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            // FOR SENDING DATA
+            students: [], // TAG STUDENTS
+
+            // INPUT SECTIONS
+            imageSource: null,
+            notes: ''
+        }
+    }
+
+    componentDidMount = async () => {
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
+
+        // GET ALL THE STUDENTS FOR LOGGED STAFF
+        fetch("http://192.168.1.143:3000/post/students", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ loginEmail })
+        })
+            .then(res => res.json())
+            .then(response => {
+
+                let students = [];
+
+                response.forEach(eachRow => {
+                    let studentName = eachRow.student_name;
+                    let studentId = eachRow.student_parent_email;
+                    let studentSelected = false;
+
+                    let obj = { studentName, studentId, studentSelected };
+
+                    students.push(obj);
+                });
+
+                this.setState({ students });
+            })
+            .catch(error => alert("ERROR"));
+    }
+
+    // TAG STUDENTS
+    makeSelection = (studentId) => {
+        // MAKE SELECTION
+        let students = [...this.state.students];
+        students.forEach(eachStudent => {
+            if (eachStudent.studentId === studentId) {
+                eachStudent.studentSelected = !eachStudent.studentSelected;
+            }
+        });
+        this.setState({ students });
+    }
+
+    selectPhotoTapped = () => {
+        const options = {
+            noData: true
+        }
+        ImagePicker.launchImageLibrary(options, response => {
+            if (response.uri) {
+                // IF THE RESPONSE GETS THE IMAGE URI THEN SET THE STATE
+                this.setState({ imageSource: response });
+            }
+        });
+    }
+
+    // SAVE DATA TO DATABASE
+    saveData = async () => {
+        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/medicine/
+
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
+
+        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/medicine/',
+            {
+                Authorization: "Bearer access-token",
+                'Content-Type': 'multipart/form-data'
+            },
+            [
+                {
+                    name: 'image',
+                    filename: 'image.png',
+                    type: 'image/png',
+                    data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                },
+
+                {
+                    name: 'textdata',
+                    data: JSON.stringify({
+                        notes: this.state.notes,
+                        students: this.state.students,
+                        loginEmail
+                    })
+                }
+            ]).then((resp) => {
+                console.log(resp);
+            }).catch((err) => {
+                console.log(err);
+            });
+    }
+
     render() {
 
         return (
@@ -2599,9 +2701,17 @@ export class MedsScreen extends Component {
                                 flexWrap: 'wrap'
                             }
                         }>
-                            <KinderImage imageLink={BottleImage} imageTitle="Ram" />
-                            <KinderImage imageLink={DiaperImage} imageTitle="Shyam" />
-                            <KinderImage imageLink={IncidentImage} imageTitle="Hari" />
+                            {
+                                this.state.students.map((student, index) => (
+                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                        <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                        {
+                                            student.studentSelected &&
+                                            <Text style={styles.studentSelected}>SELECTED</Text>
+                                        }
+                                    </TouchableOpacity>
+                                ))
+                            }
                         </View>
                     </View>
 
@@ -2622,8 +2732,21 @@ export class MedsScreen extends Component {
                                 name="md-camera"
                                 size={35}
                                 color="#000"
+                                onPress={() => this.selectPhotoTapped()}
                             />
                         </View>
+                    </View>
+
+                    <View>
+                        {
+                            this.state.imageSource &&
+                            <Image source={{ uri: this.state.imageSource.uri }} style={
+                                {
+                                    width: 100,
+                                    height: 100
+                                }
+                            } />
+                        }
                     </View>
 
                     <Hr />
@@ -2638,6 +2761,7 @@ export class MedsScreen extends Component {
                             <TextInput
                                 numberOfLines={1}
                                 placeholder="Type Optional Notes ..."
+                                onChangeText={notes => this.setState({ notes })}
                             />
                         </View>
                     </View>
@@ -2653,6 +2777,7 @@ export class MedsScreen extends Component {
                     onPress={
                         () => {
                             ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                            this.saveData();
                         }
                     }
                 >
@@ -2915,6 +3040,282 @@ export class DiaperScreen extends Component {
                                 onChangeText={num_diapers => this.setState({ num_diapers })}
                             />
                         </View>
+                    </View>
+
+                    <Hr />
+
+                    <View>
+                        <View>
+                            <Text style={
+                                styles.heading
+                            }>Notes</Text>
+                        </View>
+                        <View>
+                            <TextInput
+                                numberOfLines={1}
+                                placeholder="Type Optional Notes ..."
+                                onChangeText={notes => this.setState({ notes })}
+                            />
+                        </View>
+                    </View>
+                </View>
+
+                <TouchableOpacity style={
+                    {
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0
+                    }
+                }
+                    onPress={
+                        () => {
+                            ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                            this.saveData();
+                        }
+                    }
+                >
+                    <View style={
+                        {
+                            backgroundColor: '#dd5f40',
+                            fontSize: 30,
+                            color: '#fff',
+                            textAlign: 'center',
+                            padding: 10,
+                            width: SCREEN_WIDTH,
+                        }
+                    }>
+                        <Text style={
+                            {
+                                color: '#fff',
+                                fontSize: 30,
+                                textAlign: 'center'
+                            }
+                        }>Save</Text>
+                    </View>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+}
+
+// Potty Screen
+export class PottyScreen extends Component {
+
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            styleOptions: {
+                highlightOptions: {
+                    backgroundColor: '#dd5f40',
+                    color: '#FFFFFF'
+                },
+                unhighlightOptions: {
+                    backgroundColor: '#FFF',
+                    color: '#333333'
+                }
+            },
+            pottyWent: [
+                { id: 0, active: true, name: 'Went' },
+                { id: 1, active: false, name: 'Didnt Go' }
+            ],
+
+            // FOR SENDING DATA
+            students: [], // TAG STUDENTS
+
+            // INPUT SECTIONS
+            notes: ''
+        }
+    }
+
+    componentDidMount = async () => {
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
+
+        // GET ALL THE STUDENTS FOR LOGGED STAFF
+        fetch("http://192.168.1.143:3000/post/students", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ loginEmail })
+        })
+            .then(res => res.json())
+            .then(response => {
+
+                let students = [];
+
+                response.forEach(eachRow => {
+                    let studentName = eachRow.student_name;
+                    let studentId = eachRow.student_parent_email;
+                    let studentSelected = false;
+
+                    let obj = { studentName, studentId, studentSelected };
+
+                    students.push(obj);
+                });
+
+                this.setState({ students });
+            })
+            .catch(error => alert("ERROR"));
+    }
+
+    // TAG STUDENTS
+    makeSelection = (studentId) => {
+        // MAKE SELECTION
+        let students = [...this.state.students];
+        students.forEach(eachStudent => {
+            if (eachStudent.studentId === studentId) {
+                eachStudent.studentSelected = !eachStudent.studentSelected;
+            }
+        });
+        this.setState({ students });
+    }
+
+    highlightOptionChange = (itemId) => {
+        let pottyWent = [...this.state.pottyWent];
+
+        pottyWent.forEach(eachOption => {
+            if (itemId === eachOption['id']) {
+                eachOption['active'] = true;
+            } else {
+                eachOption['active'] = false;
+            }
+        });
+
+        this.setState({ pottyWent });
+    }
+
+    // SAVE DATA TO DATABASE
+    saveData = async () => {
+        // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/potty/
+
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
+
+        const pottyWent = this.state.pottyWent.filter(eachOption => {
+            return eachOption['active'];
+        });
+
+        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/potty/',
+            {
+                Authorization: "Bearer access-token",
+                'Content-Type': 'multipart/form-data'
+            },
+            [
+                {
+                    name: 'textdata',
+                    data: JSON.stringify({
+                        notes: this.state.notes,
+                        students: this.state.students,
+                        pottyWent,
+                        loginEmail
+                    })
+                }
+            ]).then((resp) => {
+                console.log(resp);
+            }).catch((err) => {
+                console.log(err);
+            });
+    }
+
+    render() {
+
+        return (
+            <View style={
+                {
+                    flex: 1
+                }
+            }>
+
+                <View style={
+                    {
+                        flexDirection: 'row',
+                        backgroundColor: '#dd5f40',
+                        padding: 10
+                    }
+                }>
+                    <Icon
+                        name="md-close"
+                        size={35}
+                        color="#fff"
+                        style={
+                            {
+                                paddingLeft: 10
+                            }
+                        }
+                        onPress={
+                            () => {
+                                this.props.navigation.navigate('Home');
+                            }
+                        }
+                    />
+                    <View>
+                        <Text style={
+                            {
+                                paddingLeft: 20,
+                                fontSize: 24,
+                                color: '#FFF'
+                            }
+                        }>Diaper</Text>
+                    </View>
+                </View>
+
+                <View style={
+                    {
+                        padding: 10
+                    }
+                }>
+                    {/* CODE FROM HERE */}
+
+                    <View>
+                        <Text style={styles.heading}>
+                            Tag Students
+                        </Text>
+
+                        <View style={
+                            {
+                                flexDirection: 'row',
+                                flexWrap: 'wrap'
+                            }
+                        }>
+                            {
+                                this.state.students.map((student, index) => (
+                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                        <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                        {
+                                            student.studentSelected &&
+                                            <Text style={styles.studentSelected}>SELECTED</Text>
+                                        }
+                                    </TouchableOpacity>
+                                ))
+                            }
+                        </View>
+                    </View>
+
+                    <View style={
+                        {
+                            flexDirection: 'row',
+                            marginTop: 10
+                        }
+                    }>
+                        {
+                            this.state.pottyWent.map(item => {
+                                let itemStyle = null;
+                                if (item.active === true) {
+                                    itemStyle = this.state.styleOptions.highlightOptions;
+                                } else {
+                                    itemStyle = this.state.styleOptions.unhighlightOptions;
+                                }
+                                return (
+                                    <TouchableOpacity onPress={() => this.highlightOptionChange(item.id)} key={item.id} style={{
+                                        flex: 1
+                                    }}>
+                                        <View style={[styles.options, { backgroundColor: itemStyle.backgroundColor }]}>
+                                            <Text style={[styles.optionsText, { color: itemStyle.color }]}>{item.name}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })
+                        }
                     </View>
 
                     <Hr />

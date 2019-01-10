@@ -7,7 +7,8 @@ export default class KinderImage extends Component {
             <View style={
                 {
                     width: 100,
-                    marginTop: 10
+                    marginTop: 10,
+                    marginBottom: 10
                 }
             }>
                 <Image
