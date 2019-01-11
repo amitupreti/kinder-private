@@ -17,6 +17,9 @@ import {
     Button
 } from 'react-native';
 
+// TIME PICKER
+import DateTimePicker from 'react-native-modal-datetime-picker';
+
 import ImagePicker from 'react-native-image-picker';
 import VideoPicker from 'react-native-image-crop-picker';
 import RNFetchBlob from 'react-native-fetch-blob';
@@ -674,9 +677,11 @@ export class ObservationScreen extends Component {
 
             // INPUT SECTIONS
             milestone: '',
-            time: '12:00',
+            time: '',
             imageSource: null,
-            notes: ''
+            notes: '',
+            dateTimePickerVisible: false, // DEFAULT TIME PICKER NOT VISIBLE
+            amorpm: ''
         };
     }
 
@@ -741,34 +746,56 @@ export class ObservationScreen extends Component {
 
         const loginEmail = await AsyncStorage.getItem("loginEmail");
 
-        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/observation/',
-            {
-                Authorization: "Bearer access-token",
-                'Content-Type': 'multipart/form-data'
-            },
-            [
-                {
-                    name: 'image',
-                    filename: 'image.png',
-                    type: 'image/png',
-                    data: RNFetchBlob.wrap(this.state.imageSource.uri)
-                },
+        if (this.state.time !== '' && this.state.imageSource !== null) {
 
+            RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/observation/',
                 {
-                    name: 'textdata',
-                    data: JSON.stringify({
-                        time: this.state.time,
-                        notes: this.state.notes,
-                        students: this.state.students,
-                        milestone: this.state.milestone,
-                        loginEmail
-                    })
-                }
-            ]).then((resp) => {
-                console.log(resp);
-            }).catch((err) => {
-                console.log(err);
-            });
+                    Authorization: "Bearer access-token",
+                    'Content-Type': 'multipart/form-data'
+                },
+                [
+                    {
+                        name: 'image',
+                        filename: 'image.png',
+                        type: 'image/png',
+                        data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                    },
+
+                    {
+                        name: 'textdata',
+                        data: JSON.stringify({
+                            time: this.state.time,
+                            notes: this.state.notes,
+                            students: this.state.students,
+                            milestone: this.state.milestone,
+                            loginEmail
+                        })
+                    }
+                ]).then((resp) => {
+                    ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                    this.props.navigation.navigate('Home');
+                    console.log(resp);
+                }).catch((err) => {
+                    console.log(err);
+                });
+        } else {
+            ToastAndroid.show("Emty photos and Time", ToastAndroid.SHORT);
+        }
+    }
+
+    // SET THE PICKER TIME
+    setDatePickerTime = (date) => {
+        // SET TIME
+
+        let hours = ("00" + String(date.getHours() % 12)).slice(-2);
+        let minutes = ("00" + String(date.getMinutes())).slice(-2);
+        let time = hours + ":" + minutes;
+        let amorpm = date.getHours() >= 12 ? "PM" : "AM";
+        this.setState({ dateTimePickerVisible: false, amorpm, time });
+    }
+
+    cancleDatePickerTime = () => {
+        this.setState({ dateTimePickerVisible: false });
     }
 
     render() {
@@ -814,41 +841,67 @@ export class ObservationScreen extends Component {
 
                 <View style={
                     {
-                        padding: 10
+                        paddingLeft: 10,
+                        paddingRight: 10,
+                        flex: 1
                     }
                 }>
-                    <View>
-                        <Text style={styles.heading}>
-                            Tag Students
+                    <ScrollView>
+                        <View>
+                            <Text style={styles.heading}>
+                                Tag Students
                         </Text>
 
-                        <View style={
-                            {
-                                flexDirection: 'row',
-                                flexWrap: 'wrap'
+                            <View style={
+                                {
+                                    flexDirection: 'row',
+                                    flexWrap: 'wrap'
+                                }
+                            }>
+                                {
+                                    this.state.students.map((student, index) => (
+                                        <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                            <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                            {
+                                                student.studentSelected &&
+                                                <Text style={styles.studentSelected}>SELECTED</Text>
+                                            }
+                                        </TouchableOpacity>
+                                    ))
+                                }
+                            </View>
+                        </View>
+
+                        <Hr />
+
+                        <TouchableOpacity onPress={
+                            () => {
+                                this.props.navigation.navigate('Milestone');
                             }
                         }>
-                            {
-                                this.state.students.map((student, index) => (
-                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
-                                        <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
-                                        {
-                                            student.studentSelected &&
-                                            <Text style={styles.studentSelected}>SELECTED</Text>
-                                        }
-                                    </TouchableOpacity>
-                                ))
-                            }
-                        </View>
-                    </View>
+                            <View style={
+                                {
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between'
+                                }
+                            }>
+                                <View>
+                                    <Text style={
+                                        styles.heading
+                                    }>Milestones</Text>
+                                </View>
+                                <View>
+                                    <Icon
+                                        name="md-add-circle"
+                                        color="#16C"
+                                        size={35}
+                                    />
+                                </View>
+                            </View>
+                        </TouchableOpacity>
 
-                    <Hr />
+                        <Hr />
 
-                    <TouchableOpacity onPress={
-                        () => {
-                            this.props.navigation.navigate('Milestone');
-                        }
-                    }>
                         <View style={
                             {
                                 flexDirection: 'row',
@@ -858,91 +911,87 @@ export class ObservationScreen extends Component {
                             <View>
                                 <Text style={
                                     styles.heading
-                                }>Milestones</Text>
+                                }>
+                                    Time: {
+                                        this.state.time + " " + this.state.amorpm
+                                    }
+                                </Text>
                             </View>
                             <View>
                                 <Icon
-                                    name="md-add-circle"
+                                    name="md-create"
+                                    color="#000"
+                                    size={35}
+                                    onPress={() => {
+                                        // SHOW TIME PICKER
+                                        this.setState({ dateTimePickerVisible: true });
+                                    }}
+                                />
+                            </View>
+
+                            <DateTimePicker
+                                isVisible={this.state.dateTimePickerVisible}
+                                mode={"time"}
+                                is24Hour={false}
+                                onConfirm={this.setDatePickerTime}
+                                onCancel={this.cancleDatePickerTime}
+                            />
+                        </View>
+
+                        <Hr />
+
+                        <View style={
+                            {
+                                flexDirection: 'row',
+                                justifyContent: 'space-between'
+                            }
+                        }>
+                            <View>
+                                <Text style={
+                                    styles.heading
+                                }>Photos</Text>
+                            </View>
+                            <View>
+                                <Icon
+                                    name="md-camera"
                                     color="#16C"
                                     size={35}
+                                    onPress={() => this.selectPhotoTapped()}
                                 />
                             </View>
                         </View>
-                    </TouchableOpacity>
 
-                    <Hr />
-
-                    <View style={
-                        {
-                            flexDirection: 'row',
-                            justifyContent: 'space-between'
-                        }
-                    }>
                         <View>
-                            <Text style={
-                                styles.heading
-                            }>Time: 12:45</Text>
+                            {
+                                this.state.imageSource &&
+                                <Image source={{ uri: this.state.imageSource.uri }} style={
+                                    {
+                                        width: 100,
+                                        height: 100
+                                    }
+                                } />
+                            }
                         </View>
-                        <View>
-                            <Icon
-                                name="md-create"
-                                color="#000"
-                                size={35}
-                            />
-                        </View>
-                    </View>
 
-                    <Hr />
+                        <Hr />
 
-                    <View style={
-                        {
-                            flexDirection: 'row',
-                            justifyContent: 'space-between'
-                        }
-                    }>
                         <View>
-                            <Text style={
-                                styles.heading
-                            }>Photos</Text>
+                            <View>
+                                <Text style={
+                                    styles.heading
+                                }>Notes</Text>
+                            </View>
+                            <View>
+                                <TextInput
+                                    numberOfLines={1}
+                                    placeholder="Type Notes ..."
+                                    onChangeText={notes => this.setState({ notes })}
+                                />
+                            </View>
                         </View>
-                        <View>
-                            <Icon
-                                name="md-camera"
-                                color="#16C"
-                                size={35}
-                                onPress={() => this.selectPhotoTapped()}
-                            />
-                        </View>
-                    </View>
 
-                    <View>
-                        {
-                            this.state.imageSource &&
-                            <Image source={{ uri: this.state.imageSource.uri }} style={
-                                {
-                                    width: 100,
-                                    height: 100
-                                }
-                            } />
-                        }
-                    </View>
-
-                    <Hr />
-
-                    <View>
-                        <View>
-                            <Text style={
-                                styles.heading
-                            }>Notes</Text>
-                        </View>
-                        <View>
-                            <TextInput
-                                numberOfLines={1}
-                                placeholder="Type Notes ..."
-                                onChangeText={notes => this.setState({ notes })}
-                            />
-                        </View>
-                    </View>
+                        <View style={{ height: 70 }}></View>
+                    </ScrollView>
                 </View>
 
                 <TouchableOpacity style={
@@ -954,7 +1003,6 @@ export class ObservationScreen extends Component {
                 }
                     onPress={
                         () => {
-                            ToastAndroid.show('Saved', ToastAndroid.SHORT);
                             this.saveData();
                         }
                     }
@@ -1002,32 +1050,38 @@ export class NoticeScreen extends Component {
 
         const loginEmail = await AsyncStorage.getItem("loginEmail");
 
-        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/notice/',
-            {
-                Authorization: "Bearer access-token",
-                'Content-Type': 'multipart/form-data'
-            },
-            [
+        if (this.state.title !== '' && this.state.imageSource !== null) {
+            RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/notice/',
                 {
-                    name: 'image',
-                    filename: 'image.png',
-                    type: 'image/png',
-                    data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                    Authorization: "Bearer access-token",
+                    'Content-Type': 'multipart/form-data'
                 },
+                [
+                    {
+                        name: 'image',
+                        filename: 'image.png',
+                        type: 'image/png',
+                        data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                    },
 
-                {
-                    name: 'textdata',
-                    data: JSON.stringify({
-                        title: this.state.title,
-                        notes: this.state.notes,
-                        loginEmail
-                    })
-                }
-            ]).then((resp) => {
-                console.log(resp);
-            }).catch((err) => {
-                console.log(err);
-            });
+                    {
+                        name: 'textdata',
+                        data: JSON.stringify({
+                            title: this.state.title,
+                            notes: this.state.notes,
+                            loginEmail
+                        })
+                    }
+                ]).then((resp) => {
+                    ToastAndroid.show('Notice Posted', ToastAndroid.SHORT);
+                    this.props.navigation.navigate('Home');
+                    console.log(resp);
+                }).catch((err) => {
+                    console.log(err);
+                });
+        } else {
+            ToastAndroid.show('Empty Title and Photo', ToastAndroid.SHORT);
+        }
     }
 
     // CHOOSE FROM LIBRARY
@@ -1170,7 +1224,6 @@ export class NoticeScreen extends Component {
                 }
                     onPress={
                         () => {
-                            ToastAndroid.show('Notice Posted', ToastAndroid.SHORT);
                             this.saveData();
                         }
                     }
@@ -1208,10 +1261,13 @@ export class IncidentScreen extends Component {
             students: [], // TAG STUDENTS
 
             // INPUT SECTIONS
-            time: '12:00',
+            time: '',
             imageSource: null,
             title: '',
             notes: '',
+
+            dateTimePickerVisible: false, // DEFAULT TIME PICKER NOT VISIBLE
+            amorpm: ''
         };
     }
 
@@ -1264,34 +1320,42 @@ export class IncidentScreen extends Component {
 
         const loginEmail = await AsyncStorage.getItem("loginEmail");
 
-        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/incident/',
-            {
-                Authorization: "Bearer access-token",
-                'Content-Type': 'multipart/form-data'
-            },
-            [
-                {
-                    name: 'image',
-                    filename: 'image.png',
-                    type: 'image/png',
-                    data: RNFetchBlob.wrap(this.state.imageSource.uri)
-                },
+        if (this.state.time !== '' && this.state.imageSource !== null) {
 
+            RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/incident/',
                 {
-                    name: 'textdata',
-                    data: JSON.stringify({
-                        time: this.state.time,
-                        title: this.state.title,
-                        notes: this.state.notes,
-                        students: this.state.students,
-                        loginEmail
-                    })
-                }
-            ]).then((resp) => {
-                console.log(resp);
-            }).catch((err) => {
-                console.log(err);
-            });
+                    Authorization: "Bearer access-token",
+                    'Content-Type': 'multipart/form-data'
+                },
+                [
+                    {
+                        name: 'image',
+                        filename: 'image.png',
+                        type: 'image/png',
+                        data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                    },
+
+                    {
+                        name: 'textdata',
+                        data: JSON.stringify({
+                            time: this.state.time,
+                            title: this.state.title,
+                            notes: this.state.notes,
+                            students: this.state.students,
+                            loginEmail
+                        })
+                    }
+                ]).then((resp) => {
+                    ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                    this.props.navigation.navigate('Home');
+                    console.log(resp);
+                }).catch((err) => {
+                    console.log(err);
+                });
+
+        } else {
+            ToastAndroid.show("Emty photos and Time", ToastAndroid.SHORT);
+        }
     }
 
     selectPhotoTapped = () => {
@@ -1304,6 +1368,21 @@ export class IncidentScreen extends Component {
                 this.setState({ imageSource: response });
             }
         });
+    }
+
+    // SET THE PICKER TIME
+    setDatePickerTime = (date) => {
+        // SET TIME
+
+        let hours = ("00" + String(date.getHours() % 12)).slice(-2);
+        let minutes = ("00" + String(date.getMinutes())).slice(-2);
+        let time = hours + ":" + minutes;
+        let amorpm = date.getHours() >= 12 ? "PM" : "AM";
+        this.setState({ dateTimePickerVisible: false, amorpm, time });
+    }
+
+    cancleDatePickerTime = () => {
+        this.setState({ dateTimePickerVisible: false });
     }
 
     render() {
@@ -1349,126 +1428,147 @@ export class IncidentScreen extends Component {
 
                 <View style={
                     {
-                        padding: 10
+                        paddingLeft: 10,
+                        paddingRight: 10,
+                        flex: 1
                     }
                 }>
-                    <View>
-                        <Text style={styles.heading}>
-                            Tag Students
+                    <ScrollView>
+                        <View>
+                            <Text style={styles.heading}>
+                                Tag Students
                         </Text>
+
+                            <View style={
+                                {
+                                    flexDirection: 'row',
+                                    flexWrap: 'wrap'
+                                }
+                            }>
+                                {
+                                    this.state.students.map((student, index) => (
+                                        <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                            <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                            {
+                                                student.studentSelected &&
+                                                <Text style={styles.studentSelected}>SELECTED</Text>
+                                            }
+                                        </TouchableOpacity>
+                                    ))
+                                }
+                            </View>
+                        </View>
+
+                        <Hr />
 
                         <View style={
                             {
                                 flexDirection: 'row',
-                                flexWrap: 'wrap'
+                                justifyContent: 'space-between'
                             }
                         }>
+                            <View>
+                                <Text style={
+                                    styles.heading
+                                }>
+                                    Time: {
+                                        this.state.time + " " + this.state.amorpm
+                                    }
+                                </Text>
+                            </View>
+                            <View>
+                                <Icon
+                                    name="md-create"
+                                    color="#000"
+                                    size={35}
+                                    onPress={() => {
+                                        // SHOW TIME PICKER
+                                        this.setState({ dateTimePickerVisible: true });
+                                    }}
+                                />
+                            </View>
+
+                            <DateTimePicker
+                                isVisible={this.state.dateTimePickerVisible}
+                                mode={"time"}
+                                is24Hour={false}
+                                onConfirm={this.setDatePickerTime}
+                                onCancel={this.cancleDatePickerTime}
+                            />
+                        </View>
+
+                        <Hr />
+
+                        <View style={
                             {
-                                this.state.students.map((student, index) => (
-                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
-                                        <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
-                                        {
-                                            student.studentSelected &&
-                                            <Text style={styles.studentSelected}>SELECTED</Text>
-                                        }
-                                    </TouchableOpacity>
-                                ))
+                                flexDirection: 'row',
+                                justifyContent: 'space-between'
+                            }
+                        }>
+                            <View>
+                                <Text style={
+                                    styles.heading
+                                }>Photos</Text>
+                            </View>
+                            <View>
+                                <Icon
+                                    name="md-camera"
+                                    color="#16C"
+                                    size={35}
+                                    onPress={() => this.selectPhotoTapped()}
+                                />
+                            </View>
+                        </View>
+
+                        <View>
+                            {
+                                this.state.imageSource &&
+                                <Image source={{ uri: this.state.imageSource.uri }} style={
+                                    {
+                                        width: 100,
+                                        height: 100
+                                    }
+                                } />
                             }
                         </View>
-                    </View>
 
-                    <Hr />
+                        <Hr />
 
-                    <View style={
-                        {
-                            flexDirection: 'row',
-                            justifyContent: 'space-between'
-                        }
-                    }>
                         <View>
                             <Text style={
                                 styles.heading
-                            }>Time: 12:45</Text>
-                        </View>
-                        <View>
-                            <Icon
-                                name="md-create"
-                                color="#000"
-                                size={35}
-                            />
-                        </View>
-                    </View>
-
-                    <Hr />
-
-                    <View style={
-                        {
-                            flexDirection: 'row',
-                            justifyContent: 'space-between'
-                        }
-                    }>
-                        <View>
-                            <Text style={
-                                styles.heading
-                            }>Photos</Text>
-                        </View>
-                        <View>
-                            <Icon
-                                name="md-camera"
-                                color="#16C"
-                                size={35}
-                                onPress={() => this.selectPhotoTapped()}
-                            />
-                        </View>
-                    </View>
-
-                    <View>
-                        {
-                            this.state.imageSource &&
-                            <Image source={{ uri: this.state.imageSource.uri }} style={
-                                {
-                                    width: 100,
-                                    height: 100
-                                }
-                            } />
-                        }
-                    </View>
-
-                    <Hr />
-
-                    <View>
-                        <Text style={
-                            styles.heading
-                        }>Title</Text>
-                    </View>
-                    <View>
-                        <TextInput
-                            onChangeText={title => this.setState({ title })}
-                            style={
-                                {
-                                    fontSize: 20,
-                                    paddingTop: 4,
-                                    paddingBottom: 4
-                                }
-                            } placeholder="Title ..." />
-                    </View>
-
-                    <Hr />
-
-                    <View>
-                        <View>
-                            <Text style={
-                                styles.heading
-                            }>Notes</Text>
+                            }>Title</Text>
                         </View>
                         <View>
                             <TextInput
-                                numberOfLines={1}
-                                onChangeText={notes => this.setState({ notes })}
-                                placeholder="Type Notes ..."
-                            />
+                                onChangeText={title => this.setState({ title })}
+                                style={
+                                    {
+                                        fontSize: 20,
+                                        paddingTop: 4,
+                                        paddingBottom: 4
+                                    }
+                                } placeholder="Title ..." />
                         </View>
-                    </View>
+
+                        <Hr />
+
+                        <View>
+                            <View>
+                                <Text style={
+                                    styles.heading
+                                }>Notes</Text>
+                            </View>
+                            <View>
+                                <TextInput
+                                    numberOfLines={1}
+                                    onChangeText={notes => this.setState({ notes })}
+                                    placeholder="Type Notes ..."
+                                />
+                            </View>
+                        </View>
+                        <View style={{ height: 70 }}></View>
+                    </ScrollView>
                 </View>
 
                 <TouchableOpacity style={
@@ -1480,7 +1580,6 @@ export class IncidentScreen extends Component {
                 }
                     onPress={
                         () => {
-                            ToastAndroid.show('Incident Saved', ToastAndroid.SHORT);
                             this.saveData();
                         }
                     }
@@ -1594,42 +1693,49 @@ export class MealScreen extends Component {
 
         const loginEmail = await AsyncStorage.getItem("loginEmail");
 
-        const activeOption = this.state.activeOptions.filter(eachOption => {
-            return eachOption['active'];
-        });
+        if (this.state.imageSource !== null) {
 
-        const howMuchOption = this.state.howMuchOptions.filter(eachOption => {
-            return eachOption['active'];
-        });
-
-        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/meal/',
-            {
-                Authorization: "Bearer access-token",
-                'Content-Type': 'multipart/form-data'
-            },
-            [
-                {
-                    name: 'image',
-                    filename: 'image.png',
-                    type: 'image/png',
-                    data: RNFetchBlob.wrap(this.state.imageSource.uri)
-                },
-
-                {
-                    name: 'textdata',
-                    data: JSON.stringify({
-                        notes: this.state.notes,
-                        students: this.state.students,
-                        activeOption,
-                        howMuchOption,
-                        loginEmail
-                    })
-                }
-            ]).then((resp) => {
-                console.log(resp);
-            }).catch((err) => {
-                console.log(err);
+            const activeOption = this.state.activeOptions.filter(eachOption => {
+                return eachOption['active'];
             });
+
+            const howMuchOption = this.state.howMuchOptions.filter(eachOption => {
+                return eachOption['active'];
+            });
+
+            RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/meal/',
+                {
+                    Authorization: "Bearer access-token",
+                    'Content-Type': 'multipart/form-data'
+                },
+                [
+                    {
+                        name: 'image',
+                        filename: 'image.png',
+                        type: 'image/png',
+                        data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                    },
+
+                    {
+                        name: 'textdata',
+                        data: JSON.stringify({
+                            notes: this.state.notes,
+                            students: this.state.students,
+                            activeOption,
+                            howMuchOption,
+                            loginEmail
+                        })
+                    }
+                ]).then((resp) => {
+                    ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                    this.props.navigation.navigate('Home');
+                    console.log(resp);
+                }).catch((err) => {
+                    console.log(err);
+                });
+        } else {
+            ToastAndroid.show("Emty photo", ToastAndroid.SHORT);
+        }
     }
 
     selectPhotoTapped = () => {
@@ -1877,7 +1983,6 @@ export class MealScreen extends Component {
                 }
                     onPress={
                         () => {
-                            ToastAndroid.show('Saved', ToastAndroid.SHORT);
                             this.saveData();
                         }
                     }
@@ -1934,7 +2039,10 @@ export class MilkScreen extends Component {
             // INPUT SECTIONS
             imageSource: null,
             notes: '',
-            time: '12:00'
+            time: '',
+
+            dateTimePickerVisible: false, // DEFAULT TIME PICKER NOT VISIBLE
+            amorpm: ''
         }
     }
 
@@ -1987,38 +2095,46 @@ export class MilkScreen extends Component {
 
         const loginEmail = await AsyncStorage.getItem("loginEmail");
 
-        const volOfMilk = this.state.volOfMilk.filter(eachOption => {
-            return eachOption['active'];
-        });
+        if (this.state.time !== '' && this.state.imageSource !== null) {
 
-        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/milk/',
-            {
-                Authorization: "Bearer access-token",
-                'Content-Type': 'multipart/form-data'
-            },
-            [
-                {
-                    name: 'image',
-                    filename: 'image.png',
-                    type: 'image/png',
-                    data: RNFetchBlob.wrap(this.state.imageSource.uri)
-                },
-
-                {
-                    name: 'textdata',
-                    data: JSON.stringify({
-                        notes: this.state.notes,
-                        students: this.state.students,
-                        time: this.state.time,
-                        volOfMilk,
-                        loginEmail
-                    })
-                }
-            ]).then((resp) => {
-                console.log(resp);
-            }).catch((err) => {
-                console.log(err);
+            const volOfMilk = this.state.volOfMilk.filter(eachOption => {
+                return eachOption['active'];
             });
+
+            RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/milk/',
+                {
+                    Authorization: "Bearer access-token",
+                    'Content-Type': 'multipart/form-data'
+                },
+                [
+                    {
+                        name: 'image',
+                        filename: 'image.png',
+                        type: 'image/png',
+                        data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                    },
+
+                    {
+                        name: 'textdata',
+                        data: JSON.stringify({
+                            notes: this.state.notes,
+                            students: this.state.students,
+                            time: this.state.time,
+                            volOfMilk,
+                            loginEmail
+                        })
+                    }
+                ]).then((resp) => {
+                    ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                    this.props.navigation.navigate('Home');
+                    console.log(resp);
+                }).catch((err) => {
+                    console.log(err);
+                });
+
+        } else {
+            ToastAndroid.show("Emty photos and Time", ToastAndroid.SHORT);
+        }
     }
 
     selectPhotoTapped = () => {
@@ -2045,6 +2161,21 @@ export class MilkScreen extends Component {
         });
 
         this.setState({ volOfMilk });
+    }
+
+    // SET THE PICKER TIME
+    setDatePickerTime = (date) => {
+        // SET TIME
+
+        let hours = ("00" + String(date.getHours() % 12)).slice(-2);
+        let minutes = ("00" + String(date.getMinutes())).slice(-2);
+        let time = hours + ":" + minutes;
+        let amorpm = date.getHours() >= 12 ? "PM" : "AM";
+        this.setState({ dateTimePickerVisible: false, amorpm, time });
+    }
+
+    cancleDatePickerTime = () => {
+        this.setState({ dateTimePickerVisible: false });
     }
 
     render() {
@@ -2091,142 +2222,164 @@ export class MilkScreen extends Component {
 
                 <View style={
                     {
-                        padding: 10
+                        paddingLeft: 10,
+                        paddingRight: 10,
+                        flex: 1
                     }
                 }>
-                    {/* CODE FROM HERE */}
-                    <View>
-                        <Text style={styles.heading}>
-                            Tag Students
+                    <ScrollView>
+                        {/* CODE FROM HERE */}
+                        <View>
+                            <Text style={styles.heading}>
+                                Tag Students
                         </Text>
 
-                        <View style={
-                            {
-                                flexDirection: 'row',
-                                flexWrap: 'wrap'
-                            }
-                        }>
-                            {
-                                this.state.students.map((student, index) => (
-                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
-                                        <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
-                                        {
-                                            student.studentSelected &&
-                                            <Text style={styles.studentSelected}>SELECTED</Text>
-                                        }
-                                    </TouchableOpacity>
-                                ))
-                            }
-                        </View>
-                    </View>
-
-                    <View style={
-                        {
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                            marginTop: 20
-                        }
-                    }>
-                        <View>
-                            <Text style={
-                                styles.heading
-                            }>Time: 12:45</Text>
-                        </View>
-                        <View>
-                            <Icon
-                                name="md-create"
-                                color="#000"
-                                size={35}
-                            />
-                        </View>
-                    </View>
-
-                    <Hr />
-
-                    <View>
-                        <View>
-                            <Text style={styles.heading}>Choose Volume of Milk</Text>
-                        </View>
-
-                        <View style={
-                            {
-                                flexDirection: 'row',
-                                marginTop: 10
-                            }
-                        }>
-                            {
-                                this.state.volOfMilk.map(item => {
-                                    let itemStyle = null;
-                                    if (item.active === true) {
-                                        itemStyle = this.state.styleOptions.highlightOptions;
-                                    } else {
-                                        itemStyle = this.state.styleOptions.unhighlightOptions;
-                                    }
-                                    return (
-                                        <TouchableOpacity onPress={() => this.highlightOption(item.id)} key={item.id} style={{
-                                            flex: 1
-                                        }}>
-                                            <View style={[styles.options, { backgroundColor: itemStyle.backgroundColor }]}>
-                                                <Text style={[styles.optionsText, { color: itemStyle.color }]}>{item.name}</Text>
-                                            </View>
-                                        </TouchableOpacity>
-                                    );
-                                })
-                            }
-                        </View>
-                    </View>
-
-                    <Hr />
-
-                    <View style={
-                        {
-                            flexDirection: 'row',
-                            justifyContent: 'space-between'
-                        }
-                    }>
-                        <View>
-                            <Text style={
-                                styles.heading
-                            }>Photos</Text>
-                        </View>
-                        <View>
-                            <Icon
-                                name="md-camera"
-                                size={35}
-                                color="#000"
-                                onPress={() => this.selectPhotoTapped()}
-                            />
-                        </View>
-                    </View>
-
-                    <View>
-                        {
-                            this.state.imageSource &&
-                            <Image source={{ uri: this.state.imageSource.uri }} style={
+                            <View style={
                                 {
-                                    width: 100,
-                                    height: 100
+                                    flexDirection: 'row',
+                                    flexWrap: 'wrap'
                                 }
-                            } />
-                        }
-                    </View>
-
-                    <Hr />
-
-                    <View>
-                        <View>
-                            <Text style={
-                                styles.heading
-                            }>Notes</Text>
+                            }>
+                                {
+                                    this.state.students.map((student, index) => (
+                                        <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                            <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                            {
+                                                student.studentSelected &&
+                                                <Text style={styles.studentSelected}>SELECTED</Text>
+                                            }
+                                        </TouchableOpacity>
+                                    ))
+                                }
+                            </View>
                         </View>
-                        <View>
-                            <TextInput
-                                numberOfLines={1}
-                                placeholder="Type Optional Notes ..."
-                                onChangeText={notes => this.setState({ notes })}
+
+                        <View style={
+                            {
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
+                                marginTop: 20
+                            }
+                        }>
+                            <View>
+                                <Text style={
+                                    styles.heading
+                                }>
+                                    Time: {
+                                        this.state.time + " " + this.state.amorpm
+                                    }
+                                </Text>
+                            </View>
+                            <View>
+                                <Icon
+                                    name="md-create"
+                                    color="#000"
+                                    size={35}
+                                    onPress={() => {
+                                        // SHOW TIME PICKER
+                                        this.setState({ dateTimePickerVisible: true });
+                                    }}
+                                />
+                            </View>
+
+                            <DateTimePicker
+                                isVisible={this.state.dateTimePickerVisible}
+                                mode={"time"}
+                                is24Hour={false}
+                                onConfirm={this.setDatePickerTime}
+                                onCancel={this.cancleDatePickerTime}
                             />
                         </View>
-                    </View>
+
+                        <Hr />
+
+                        <View>
+                            <View>
+                                <Text style={styles.heading}>Choose Volume of Milk</Text>
+                            </View>
+
+                            <View style={
+                                {
+                                    flexDirection: 'row',
+                                    marginTop: 10
+                                }
+                            }>
+                                {
+                                    this.state.volOfMilk.map(item => {
+                                        let itemStyle = null;
+                                        if (item.active === true) {
+                                            itemStyle = this.state.styleOptions.highlightOptions;
+                                        } else {
+                                            itemStyle = this.state.styleOptions.unhighlightOptions;
+                                        }
+                                        return (
+                                            <TouchableOpacity onPress={() => this.highlightOption(item.id)} key={item.id} style={{
+                                                flex: 1
+                                            }}>
+                                                <View style={[styles.options, { backgroundColor: itemStyle.backgroundColor }]}>
+                                                    <Text style={[styles.optionsText, { color: itemStyle.color }]}>{item.name}</Text>
+                                                </View>
+                                            </TouchableOpacity>
+                                        );
+                                    })
+                                }
+                            </View>
+                        </View>
+
+                        <Hr />
+
+                        <View style={
+                            {
+                                flexDirection: 'row',
+                                justifyContent: 'space-between'
+                            }
+                        }>
+                            <View>
+                                <Text style={
+                                    styles.heading
+                                }>Photos</Text>
+                            </View>
+                            <View>
+                                <Icon
+                                    name="md-camera"
+                                    size={35}
+                                    color="#000"
+                                    onPress={() => this.selectPhotoTapped()}
+                                />
+                            </View>
+                        </View>
+
+                        <View>
+                            {
+                                this.state.imageSource &&
+                                <Image source={{ uri: this.state.imageSource.uri }} style={
+                                    {
+                                        width: 100,
+                                        height: 100
+                                    }
+                                } />
+                            }
+                        </View>
+
+                        <Hr />
+
+                        <View>
+                            <View>
+                                <Text style={
+                                    styles.heading
+                                }>Notes</Text>
+                            </View>
+                            <View>
+                                <TextInput
+                                    numberOfLines={1}
+                                    placeholder="Type Optional Notes ..."
+                                    onChangeText={notes => this.setState({ notes })}
+                                />
+                            </View>
+                        </View>
+
+                        <View style={{ height: 70 }}></View>
+                    </ScrollView>
                 </View>
 
                 <TouchableOpacity style={
@@ -2238,7 +2391,6 @@ export class MilkScreen extends Component {
                 }
                     onPress={
                         () => {
-                            ToastAndroid.show('Saved', ToastAndroid.SHORT);
                             this.saveData();
                         }
                     }
@@ -2342,33 +2494,38 @@ export class NapScreen extends Component {
         // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/nap
 
         const loginEmail = await AsyncStorage.getItem("loginEmail");
-
-        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/nap/',
-            {
-                Authorization: "Bearer access-token",
-                'Content-Type': 'multipart/form-data'
-            },
-            [
+        if (this.state.time !== '' && this.state.imageSource !== null) {
+            RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/nap/',
                 {
-                    name: 'image',
-                    filename: 'image.png',
-                    type: 'image/png',
-                    data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                    Authorization: "Bearer access-token",
+                    'Content-Type': 'multipart/form-data'
                 },
+                [
+                    {
+                        name: 'image',
+                        filename: 'image.png',
+                        type: 'image/png',
+                        data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                    },
 
-                {
-                    name: 'textdata',
-                    data: JSON.stringify({
-                        notes: this.state.notes,
-                        students: this.state.students,
-                        loginEmail
-                    })
-                }
-            ]).then((resp) => {
-                console.log(resp);
-            }).catch((err) => {
-                console.log(err);
-            });
+                    {
+                        name: 'textdata',
+                        data: JSON.stringify({
+                            notes: this.state.notes,
+                            students: this.state.students,
+                            loginEmail
+                        })
+                    }
+                ]).then((resp) => {
+                    ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                    this.props.navigation.navigate('Home');
+                    console.log(resp);
+                }).catch((err) => {
+                    console.log(err);
+                });
+        } else {
+            ToastAndroid.show("Emty photos", ToastAndroid.SHORT);
+        }
     }
 
     render() {
@@ -2506,7 +2663,6 @@ export class NapScreen extends Component {
                 }
                     onPress={
                         () => {
-                            ToastAndroid.show('Saved', ToastAndroid.SHORT);
                             this.saveData();
                         }
                     }
@@ -2611,32 +2767,38 @@ export class MedsScreen extends Component {
 
         const loginEmail = await AsyncStorage.getItem("loginEmail");
 
-        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/medicine/',
-            {
-                Authorization: "Bearer access-token",
-                'Content-Type': 'multipart/form-data'
-            },
-            [
+        if (this.state.imageSource !== null) {
+            RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/medicine/',
                 {
-                    name: 'image',
-                    filename: 'image.png',
-                    type: 'image/png',
-                    data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                    Authorization: "Bearer access-token",
+                    'Content-Type': 'multipart/form-data'
                 },
+                [
+                    {
+                        name: 'image',
+                        filename: 'image.png',
+                        type: 'image/png',
+                        data: RNFetchBlob.wrap(this.state.imageSource.uri)
+                    },
 
-                {
-                    name: 'textdata',
-                    data: JSON.stringify({
-                        notes: this.state.notes,
-                        students: this.state.students,
-                        loginEmail
-                    })
-                }
-            ]).then((resp) => {
-                console.log(resp);
-            }).catch((err) => {
-                console.log(err);
-            });
+                    {
+                        name: 'textdata',
+                        data: JSON.stringify({
+                            notes: this.state.notes,
+                            students: this.state.students,
+                            loginEmail
+                        })
+                    }
+                ]).then((resp) => {
+                    ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                    this.props.navigation.navigate('Home');
+                    console.log(resp);
+                }).catch((err) => {
+                    console.log(err);
+                });
+        } else {
+            ToastAndroid.show("Emty photos", ToastAndroid.SHORT);
+        }
     }
 
     render() {
@@ -2774,7 +2936,6 @@ export class MedsScreen extends Component {
                 }
                     onPress={
                         () => {
-                            ToastAndroid.show('Saved', ToastAndroid.SHORT);
                             this.saveData();
                         }
                     }
@@ -2896,32 +3057,37 @@ export class DiaperScreen extends Component {
         // SEND THE DATA TO SERVER http://192.168.1.143:3000/post/diaper
 
         const loginEmail = await AsyncStorage.getItem("loginEmail");
-
-        const diaperChanged = this.state.diaperChanged.filter(eachOption => {
-            return eachOption['active'];
-        });
-
-        RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/diaper/',
-            {
-                Authorization: "Bearer access-token",
-                'Content-Type': 'multipart/form-data'
-            },
-            [
-                {
-                    name: 'textdata',
-                    data: JSON.stringify({
-                        notes: this.state.notes,
-                        students: this.state.students,
-                        diaperChanged,
-                        num_diapers: this.state.num_diapers,
-                        loginEmail
-                    })
-                }
-            ]).then((resp) => {
-                console.log(resp);
-            }).catch((err) => {
-                console.log(err);
+        if (this.state.num_diapers) {
+            const diaperChanged = this.state.diaperChanged.filter(eachOption => {
+                return eachOption['active'];
             });
+
+            RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/diaper/',
+                {
+                    Authorization: "Bearer access-token",
+                    'Content-Type': 'multipart/form-data'
+                },
+                [
+                    {
+                        name: 'textdata',
+                        data: JSON.stringify({
+                            notes: this.state.notes,
+                            students: this.state.students,
+                            diaperChanged,
+                            num_diapers: this.state.num_diapers,
+                            loginEmail
+                        })
+                    }
+                ]).then((resp) => {
+                    ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                    this.props.navigation.navigate('Home');
+                    console.log(resp);
+                }).catch((err) => {
+                    console.log(err);
+                });
+        } else {
+            ToastAndroid.show('Diaper number not specified', ToastAndroid.SHORT);
+        }
     }
 
     render() {
@@ -3067,7 +3233,6 @@ export class DiaperScreen extends Component {
                 }
                     onPress={
                         () => {
-                            ToastAndroid.show('Saved', ToastAndroid.SHORT);
                             this.saveData();
                         }
                     }
@@ -3209,6 +3374,8 @@ export class PottyScreen extends Component {
                     })
                 }
             ]).then((resp) => {
+                ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                this.props.navigation.navigate('Home');
                 console.log(resp);
             }).catch((err) => {
                 console.log(err);
@@ -3343,7 +3510,6 @@ export class PottyScreen extends Component {
                 }
                     onPress={
                         () => {
-                            ToastAndroid.show('Saved', ToastAndroid.SHORT);
                             this.saveData();
                         }
                     }
@@ -3455,62 +3621,70 @@ export class PhotoScreen extends Component {
 
         const loginEmail = await AsyncStorage.getItem("loginEmail");
 
-        this.state.photos.map(eachPhoto => {
-            RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/photos/',
-                {
-                    Authorization: "Bearer access-token",
-                    'Content-Type': 'multipart/form-data'
-                },
-                [
+        if (this.state.photos.length || this.state.capturedPhotos.length) {
+            this.state.photos.map(eachPhoto => {
+                RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/photos/',
                     {
-                        name: 'image',
-                        filename: 'post.png',
-                        type: 'image/png',
-                        data: RNFetchBlob.wrap(eachPhoto.uri)
+                        Authorization: "Bearer access-token",
+                        'Content-Type': 'multipart/form-data'
                     },
-                    {
-                        name: 'textdata',
-                        data: JSON.stringify({
-                            loginEmail,
-                            students: this.state.students
-                        })
-                    }
-                ]).then((resp) => {
-                    console.log(resp);
-                }).catch((err) => {
-                    console.log(err);
-                });
-        });
+                    [
+                        {
+                            name: 'image',
+                            filename: 'post.png',
+                            type: 'image/png',
+                            data: RNFetchBlob.wrap(eachPhoto.uri)
+                        },
+                        {
+                            name: 'textdata',
+                            data: JSON.stringify({
+                                loginEmail,
+                                students: this.state.students
+                            })
+                        }
+                    ]).then((resp) => {
+                        console.log(resp);
+                    }).catch((err) => {
+                        console.log(err);
+                    });
+            });
 
-        this.state.capturedPhotos.map(eachPhoto => {
-            RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/photos/',
-                {
-                    Authorization: "Bearer access-token",
-                    'Content-Type': 'multipart/form-data'
-                },
-                [
+            this.state.capturedPhotos.map(eachPhoto => {
+                RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/photos/',
                     {
-                        name: 'image',
-                        filename: 'post.png',
-                        type: 'image/png',
-                        data: RNFetchBlob.wrap(eachPhoto)
+                        Authorization: "Bearer access-token",
+                        'Content-Type': 'multipart/form-data'
                     },
-                    {
-                        name: 'textdata',
-                        data: JSON.stringify({
-                            loginEmail,
-                            students: this.state.students
-                        })
-                    }
-                ]).then((resp) => {
-                    console.log(resp);
-                }).catch((err) => {
-                    console.log(err);
-                });
-        });
+                    [
+                        {
+                            name: 'image',
+                            filename: 'post.png',
+                            type: 'image/png',
+                            data: RNFetchBlob.wrap(eachPhoto)
+                        },
+                        {
+                            name: 'textdata',
+                            data: JSON.stringify({
+                                loginEmail,
+                                students: this.state.students
+                            })
+                        }
+                    ]).then((resp) => {
+                        ToastAndroid.show('Saved', ToastAndroid.SHORT);
+                        console.log(resp);
+                    }).catch((err) => {
+                        console.log(err);
+                    });
+            });
 
-        this.setState({ modalVisible: false, photos: [], capturedPhotos: [] });
-        this.props.navigation.navigate("Home");
+
+
+            this.setState({ modalVisible: false, photos: [], capturedPhotos: [] });
+            this.props.navigation.navigate("Home");
+
+        } else {
+            ToastAndroid.show("Emty photos", ToastAndroid.SHORT);
+        }
     }
 
     render() {
@@ -3563,7 +3737,6 @@ export class PhotoScreen extends Component {
                             title={"SAVE PHOTO"}
                             color={"#16C"}
                             onPress={() => {
-                                ToastAndroid.show("PHOTO SAVED", ToastAndroid.SHORT);
                                 this.saveData();
                             }}
                         />
