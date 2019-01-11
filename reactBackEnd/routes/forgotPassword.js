@@ -3,6 +3,14 @@ var router = express.Router();
 var mysql = require('mysql');
 var nodemailer = require('nodemailer');
 
+// FOR RESET CODE
+function getResetCode(length) {
+    let str = "0123456789";
+    let shuffled = str.split('').sort(function () { return 0.5 - Math.random() }).join('');
+    let finalShuffled = shuffled.substring(0, length);
+    return finalShuffled;
+}
+
 function sendEmail(resetCode, resetEmail) {
     var transporter = nodemailer.createTransport({
         service: 'gmail',
