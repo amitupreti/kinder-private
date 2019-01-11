@@ -14,12 +14,11 @@ import {
     AsyncStorage,
     PermissionsAndroid,
     StatusBar,
-    CameraRoll,
-    Button,
-    FlatList
+    Button
 } from 'react-native';
 
 import ImagePicker from 'react-native-image-picker';
+import VideoPicker from 'react-native-image-crop-picker';
 import RNFetchBlob from 'react-native-fetch-blob';
 
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -33,7 +32,6 @@ import IncidentImage from '../images/incident.png';
 
 // CAMERA COMPONENT
 import Camera from 'react-native-camera';
-import { getAllExternalFilesDirs } from 'react-native-fs';
 
 // WIDTH AND HEIGHT OF SCREEN
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -3777,6 +3775,238 @@ export class PhotoCaptureScreen extends Component {
                     </TouchableOpacity>
                 </View>
             </View>
+        );
+    }
+}
+
+// Video Screen
+export class VideoScreen extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            video: null, // VIDEO WILL BE HERE
+
+            students: [], // TAG STUDENTS
+
+            uploadProgress: 0 // UPLOAD PROGRESS
+        };
+    }
+
+    componentDidMount = async () => {
+        const loginEmail = await AsyncStorage.getItem("loginEmail");
+
+        // GET ALL THE STUDENTS FOR LOGGED STAFF
+        fetch("http://192.168.1.143:3000/post/students", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ loginEmail })
+        })
+            .then(res => res.json())
+            .then(response => {
+
+                let students = [];
+
+                response.forEach(eachRow => {
+                    let studentName = eachRow.student_name;
+                    let studentId = eachRow.student_parent_email;
+                    let studentSelected = false;
+
+                    let obj = { studentName, studentId, studentSelected };
+
+                    students.push(obj);
+                });
+
+                this.setState({ students });
+            })
+            .catch(error => alert("ERROR"));
+    }
+
+    // TAG STUDENTS
+    makeSelection = (studentId) => {
+        // MAKE SELECTION
+        let students = [...this.state.students];
+        students.forEach(eachStudent => {
+            if (eachStudent.studentId === studentId) {
+                eachStudent.studentSelected = !eachStudent.studentSelected;
+            }
+        });
+        this.setState({ students });
+    }
+
+    // SHOW VIDEO TAPPED
+    selectVideoTapped = () => {
+        VideoPicker.openPicker({
+            mediaType: "video"
+        }).then(video => {
+            let path = video.path;
+            this.setState({ video: path });
+        }).catch(error => {
+            this.setState({ video: null });
+        })
+    }
+
+    saveData = async () => {
+        if (this.state.video) {
+
+            const loginEmail = await AsyncStorage.getItem("loginEmail");
+
+            ToastAndroid.show("Video Uploading...", ToastAndroid.LONG);
+
+            RNFetchBlob.fetch('POST', 'http://192.168.1.143:3000/post/video/',
+                {
+                    Authorization: "Bearer access-token",
+                    'Content-Type': 'multipart/form-data'
+                },
+                [
+                    {
+                        name: 'video',
+                        filename: 'video.mp4',
+                        data: RNFetchBlob.wrap(this.state.video)
+                    },
+                    {
+                        name: 'textdata',
+                        data: JSON.stringify({
+                            loginEmail,
+                            students: this.state.students
+                        })
+                    }
+                ]).then((resp) => {
+                    this.props.navigation.navigate("Home");
+                    ToastAndroid.show("VIDEO UPLOADED", ToastAndroid.SHORT);
+                }).catch((err) => {
+                    console.log(err);
+                });
+
+        } else {
+            ToastAndroid.show("No selected Video", ToastAndroid.SHORT);
+        }
+    }
+
+    render() {
+
+        return (
+            <View style={
+                {
+                    flex: 1
+                }
+            }>
+
+                <View style={
+                    {
+                        flexDirection: 'row',
+                        backgroundColor: '#16C',
+                        padding: 10
+                    }
+                }>
+                    <Icon
+                        name="md-close"
+                        size={35}
+                        color="#fff"
+                        style={
+                            {
+                                paddingLeft: 10
+                            }
+                        }
+                        onPress={
+                            () => {
+                                this.props.navigation.navigate('Home');
+                            }
+                        }
+                    />
+                    <View>
+                        <Text style={
+                            {
+                                paddingLeft: 20,
+                                fontSize: 24,
+                                color: '#fff'
+                            }
+                        }>Video</Text>
+                    </View>
+                </View>
+
+                <View style={
+                    {
+                        padding: 10,
+                        flex: 1
+                    }
+                }>
+                    {/* CODE FROM HERE */}
+
+                    <View>
+                        <Text style={styles.heading}>
+                            Tag Students
+                        </Text>
+
+                        <View style={
+                            {
+                                flexDirection: 'row',
+                                flexWrap: 'wrap'
+                            }
+                        }>
+                            {
+                                this.state.students.map((student, index) => (
+                                    <TouchableOpacity key={index} onPress={() => this.makeSelection(student.studentId)}>
+                                        <KinderImage imageLink={BottleImage} imageTitle={student.studentName} />
+                                        {
+                                            student.studentSelected &&
+                                            <Text style={styles.studentSelected}>SELECTED</Text>
+                                        }
+                                    </TouchableOpacity>
+                                ))
+                            }
+                        </View>
+                    </View>
+
+                    <View style={
+                        {
+                            padding: 10
+                        }
+                    }>
+                        <Button
+                            title={"Select Video"}
+                            color={"#16C"}
+                            onPress={() => this.selectVideoTapped()}
+                        />
+                    </View>
+
+                    <ScrollView>
+                        <View style={
+                            {
+                                padding: 10
+                            }
+                        }>
+                            {
+                                this.state.video === null &&
+                                <Text>No Video Selected</Text>
+                            }
+
+                            {
+                                this.state.video &&
+                                <Text>
+                                    Video Selected
+                                    <Text>{this.state.video}</Text>
+                                </Text>
+                            }
+                        </View>
+                    </ScrollView>
+
+                    <View style={
+                        {
+                            padding: 10
+                        }
+                    }>
+                        <Button
+                            title={"Save Video"}
+                            color={"#1ea038"}
+                            onPress={() => this.saveData()}
+                        />
+                    </View>
+                </View>
+            </View>
+
         );
     }
 }

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 10, 2019 at 06:07 PM
+-- Generation Time: Jan 11, 2019 at 11:16 AM
 -- Server version: 10.1.21-MariaDB
 -- PHP Version: 7.1.2
 
@@ -64,9 +64,11 @@ CREATE TABLE `attendance` (
 --
 
 INSERT INTO `attendance` (`attendance_id`, `attendance_student`, `attendance_date`, `attendance_checkin_time`, `attendance_checkout_time`, `attendance_checkedin`, `attendance_checkedout`) VALUES
-(8, 'sujal@gmail.com', '2019-01-09', '12:00', '0', 1, 0),
-(9, 'a.u.aua937@gmail.com', '2019-01-09', '12:00', '0', 1, 0),
-(10, 'sujal@gmail.com', '2019-01-10', '12:00', '0', 1, 0);
+(8, 'sujal@gmail.com', '2019-01-09', '12:00', '12:00', 1, 1),
+(9, 'a.u.aua937@gmail.com', '2019-01-09', '12:00', '12:00', 1, 1),
+(10, 'sujal@gmail.com', '2019-01-10', '12:00', '12:00', 1, 1),
+(11, 'sujal@gmail.com', '2019-01-11', '12:00', '12:00', 1, 1),
+(12, 'a.u.aua937@gmail.com', '2019-01-11', '12:00', '12:00', 1, 1);
 
 -- --------------------------------------------------------
 
@@ -132,7 +134,31 @@ INSERT INTO `meal` (`meal_id`, `meal_student`, `meal_type`, `meal_well`, `meal_p
 (1, 'sujal@gmail.com', 'Launch', 'Ate Well', 'image_MDCRZW_image.png', 'Breakfast is eaten by sujal and rakesh', '2019-01-08 16:43:03', 0),
 (2, 'rupesh@gmail.com', 'Launch', 'Ate Well', 'image_MDCRZW_image.png', 'Breakfast is eaten by sujal and rakesh', '2019-01-08 16:43:03', 0),
 (3, 'sujal@gmail.com', 'Snack', 'Didnt Eat Well', 'image_OAY19P_image.png', 'Not ate well amit sathi', '2019-01-09 09:43:49', 0),
-(4, 'a.u.aua937@gmail.com', 'Snack', 'Didnt Eat Well', 'image_OAY19P_image.png', 'Not ate well amit sathi', '2019-01-09 09:43:49', 0);
+(4, 'a.u.aua937@gmail.com', 'Snack', 'Didnt Eat Well', 'image_OAY19P_image.png', 'Not ate well amit sathi', '2019-01-09 09:43:49', 0),
+(5, 'sujal@gmail.com', 'Dinner', 'Ate Well', 'image_TWEAK8_image.png', 'Majjale', '2019-01-10 18:18:02', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `medicine`
+--
+
+CREATE TABLE `medicine` (
+  `medicine_id` int(11) NOT NULL,
+  `medicine_student` varchar(300) NOT NULL,
+  `medicine_photo` text NOT NULL,
+  `medicine_time` date NOT NULL,
+  `medicine_note` text NOT NULL,
+  `medicine_uploaded_by` varchar(300) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `medicine`
+--
+
+INSERT INTO `medicine` (`medicine_id`, `medicine_student`, `medicine_photo`, `medicine_time`, `medicine_note`, `medicine_uploaded_by`) VALUES
+(1, 'sujal@gmail.com', 'image_AES0FT_image.png', '0000-00-00', 'Some', 'aakashgautam107@gmail.com'),
+(2, 'a.u.aua937@gmail.com', 'image_AES0FT_image.png', '0000-00-00', 'Some', 'aakashgautam107@gmail.com');
 
 -- --------------------------------------------------------
 
@@ -157,7 +183,12 @@ INSERT INTO `milestone` (`milestone_id`, `milestone_student`, `milestone_indicat
 (2, 'a.u.aua937@gmail.com', 'Not Observed', 'COG', 'aakashgautam107@gmail.com'),
 (3, 'sujal@gmail.com', 'Not Observed', 'LIT', 'aakashgautam107@gmail.com'),
 (4, 'a.u.aua937@gmail.com', 'Observed', 'LIT', 'aakashgautam107@gmail.com'),
-(5, 'rupesh@gmail.com', 'Mastered', 'LIT', 'aakashgautam107@gmail.com');
+(5, 'rupesh@gmail.com', 'Mastered', 'LIT', 'aakashgautam107@gmail.com'),
+(6, 'sujal@gmail.com', 'Not Observed', 'COG', 'aakashgautam107@gmail.com'),
+(7, 'rupesh@gmail.com', 'Developing', 'COG', 'aakashgautam107@gmail.com'),
+(8, 'sujal@gmail.com', 'Introduced', 'ART', 'aakashgautam107@gmail.com'),
+(9, 'a.u.aua937@gmail.com', 'Mastered', 'ART', 'aakashgautam107@gmail.com'),
+(10, 'rupesh@gmail.com', 'Developing', 'ART', 'aakashgautam107@gmail.com');
 
 -- --------------------------------------------------------
 
@@ -230,6 +261,13 @@ CREATE TABLE `observation` (
   `observation_uploaded_by` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+--
+-- Dumping data for table `observation`
+--
+
+INSERT INTO `observation` (`observation_id`, `observation_student`, `observation_milestone`, `observation_time`, `observation_photo`, `observation_note`, `observation_uploaded_by`) VALUES
+(1, 'sujal@gmail.com', '', '12:00', 'image_AK4SO6_image.png', 'Sfg', 0);
+
 -- --------------------------------------------------------
 
 --
@@ -282,7 +320,32 @@ INSERT INTO `photos` (`photo_id`, `photo_student`, `photo_name`, `photo_date`, `
 (8, '', 'image_AXBCPR_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
 (9, 'sujal@gmail.com', 'image_NHIW84_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
 (10, 'rupesh@gmail.com', 'image_NHIW84_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
-(11, 'a.u.aua937@gmail.com', 'image_VM5REO_post.png', '2019-01-10', 'aakashgautam107@gmail.com');
+(11, 'a.u.aua937@gmail.com', 'image_VM5REO_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
+(12, 'sujal@gmail.com', 'image_Z3XO8B_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
+(13, 'a.u.aua937@gmail.com', 'image_Z3XO8B_post.png', '2019-01-10', 'aakashgautam107@gmail.com'),
+(14, 'sujal@gmail.com', 'image_QHDSLJ_post.png', '2019-01-10', 'aakashgautam107@gmail.com');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `potty`
+--
+
+CREATE TABLE `potty` (
+  `potty_id` int(11) NOT NULL,
+  `potty_student` varchar(300) NOT NULL,
+  `potty_went` varchar(300) NOT NULL,
+  `potty_note` text NOT NULL,
+  `potty_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `potty_uploaded_by` varchar(300) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `potty`
+--
+
+INSERT INTO `potty` (`potty_id`, `potty_student`, `potty_went`, `potty_note`, `potty_time`, `potty_uploaded_by`) VALUES
+(1, 'sujal@gmail.com', 'Didnt Go', 'Diehhjfg', '2019-01-10 17:57:47', 'aakashgautam107@gmail.com');
 
 -- --------------------------------------------------------
 
@@ -340,6 +403,27 @@ INSERT INTO `students` (`student_id`, `student_name`, `student_age`, `student_pa
 (29, 'Amit', '3', 'Amit Upreti', 'a.u.aua937@gmail.com', 1, 20, '', '98765432', '', '', '0000-00-00', '00:00:00', '00:00:00', 'male', ''),
 (30, 'Rakesh', '2', 'Rupesh', 'rupesh@gmail.com', 1, 20, '', '98765321', '', '', '0000-00-00', '00:00:00', '00:00:00', '', '');
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `video`
+--
+
+CREATE TABLE `video` (
+  `video_id` int(11) NOT NULL,
+  `video_student` varchar(300) NOT NULL,
+  `video_name` text NOT NULL,
+  `video_date` date NOT NULL,
+  `video_uploaded_by` varchar(300) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `video`
+--
+
+INSERT INTO `video` (`video_id`, `video_student`, `video_name`, `video_date`, `video_uploaded_by`) VALUES
+(1, 'sujal@gmail.com', 'video_3UCZ1B_video.mp4', '2019-01-11', 'aakashgautam107@gmail.com');
+
 --
 -- Indexes for dumped tables
 --
@@ -373,6 +457,12 @@ ALTER TABLE `incident`
 --
 ALTER TABLE `meal`
   ADD PRIMARY KEY (`meal_id`);
+
+--
+-- Indexes for table `medicine`
+--
+ALTER TABLE `medicine`
+  ADD PRIMARY KEY (`medicine_id`);
 
 --
 -- Indexes for table `milestone`
@@ -418,6 +508,12 @@ ALTER TABLE `photos`
   ADD PRIMARY KEY (`photo_id`);
 
 --
+-- Indexes for table `potty`
+--
+ALTER TABLE `potty`
+  ADD PRIMARY KEY (`potty_id`);
+
+--
 -- Indexes for table `staff`
 --
 ALTER TABLE `staff`
@@ -428,6 +524,12 @@ ALTER TABLE `staff`
 --
 ALTER TABLE `students`
   ADD PRIMARY KEY (`student_id`);
+
+--
+-- Indexes for table `video`
+--
+ALTER TABLE `video`
+  ADD PRIMARY KEY (`video_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -442,7 +544,7 @@ ALTER TABLE `admin_staff`
 -- AUTO_INCREMENT for table `attendance`
 --
 ALTER TABLE `attendance`
-  MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 --
 -- AUTO_INCREMENT for table `diaper`
 --
@@ -457,12 +559,17 @@ ALTER TABLE `incident`
 -- AUTO_INCREMENT for table `meal`
 --
 ALTER TABLE `meal`
-  MODIFY `meal_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `meal_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+--
+-- AUTO_INCREMENT for table `medicine`
+--
+ALTER TABLE `medicine`
+  MODIFY `medicine_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 --
 -- AUTO_INCREMENT for table `milestone`
 --
 ALTER TABLE `milestone`
-  MODIFY `milestone_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `milestone_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 --
 -- AUTO_INCREMENT for table `milk`
 --
@@ -482,7 +589,7 @@ ALTER TABLE `notice`
 -- AUTO_INCREMENT for table `observation`
 --
 ALTER TABLE `observation`
-  MODIFY `observation_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `observation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 --
 -- AUTO_INCREMENT for table `parent`
 --
@@ -492,7 +599,12 @@ ALTER TABLE `parent`
 -- AUTO_INCREMENT for table `photos`
 --
 ALTER TABLE `photos`
-  MODIFY `photo_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `photo_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+--
+-- AUTO_INCREMENT for table `potty`
+--
+ALTER TABLE `potty`
+  MODIFY `potty_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 --
 -- AUTO_INCREMENT for table `staff`
 --
@@ -503,6 +615,11 @@ ALTER TABLE `staff`
 --
 ALTER TABLE `students`
   MODIFY `student_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+--
+-- AUTO_INCREMENT for table `video`
+--
+ALTER TABLE `video`
+  MODIFY `video_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

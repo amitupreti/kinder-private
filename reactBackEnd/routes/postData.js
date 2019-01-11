@@ -520,6 +520,25 @@ router.post("/potty", function (req, res, next) {
 });
 
 // PHOTO SECTION
+router.get("/photos", function (req, res, next) {
+    // GET POTTY DATA
+    con.query("SELECT * FROM photos ORDER BY photo_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
+router.get("/photos/:student_email", function (req, res, next) {
+    let student_email = req.params.student_email;
+    // GET PHOTOS DATA
+    con.query("SELECT * FROM photos WHERE photo_student='" + student_email + "' ORDER BY photo_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
 router.post("/photos", function (req, res, next) {
     var form = new formidable.IncomingForm();
 
@@ -580,6 +599,70 @@ router.post("/milestone", function (req, res, next) {
     res.status(200).json({ message: "OK" });
 });
 
+// VIDEO SECTION
+router.get("/video", function (req, res, next) {
+    // GET POTTY DATA
+    con.query("SELECT * FROM video ORDER BY video_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
+router.get("/video/:student_email", function (req, res, next) {
+    let student_email = req.params.student_email;
+    // GET VIDEO DATA
+    con.query("SELECT * FROM video WHERE video_student='" + student_email + "' ORDER BY video_id DESC", function (err, result, fields) {
+        if (err) throw err;
+
+        res.status(200).json(result);
+    });
+});
+
+
+router.post("/video", function (req, res, next) {
+    var form = new formidable.IncomingForm();
+
+    form.parse(req, function (err, fields, files) {
+        if (err) throw err;
+
+        // FOR FILES
+        var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var shuffled = str.split('').sort(function () { return 0.5 - Math.random() }).join('');
+        var finalShuffled = shuffled.substring(0, 6);
+
+        var oldpath = files.video.path;
+        var newpath = path.join(__dirname, "uploaded_videos", "video_" + finalShuffled + "_" + files.video.name);
+
+        var textData = JSON.parse(fields.textdata);
+        var videoName = "video_" + finalShuffled + "_" + files.video.name;
+
+        console.log(textData);
+        console.log(videoName);
+
+        // // UPLOAD VIDEO
+        fs.rename(oldpath, newpath, function (err) {
+            if (err) throw err;
+
+
+            // SEND TO ONLY SELECTED STUDENTS
+            let selected = textData['students'].filter(function (student) {
+                return student.studentSelected;
+            })
+
+            selected.forEach(eachStudent => {
+                con.query("INSERT INTO video VALUES (NULL,'" + eachStudent['studentId'] + "', '" + videoName + "', '" + getToday() + "', '" + textData['loginEmail'] + "')", function (err, result, fields) {
+                    if (err) throw err;
+
+                    console.log("Video INSERTED");
+                });
+            });
+        });
+
+        res.json({ message: "Video Uploaded" });
+    });
+});
+
 // TAG STUDENTS
 router.post("/students", function (req, res, next) {
     // GET THE STUDENTS RELATED TO THE TEACHER RELATED TO ROOM
@@ -594,7 +677,7 @@ router.post("/students", function (req, res, next) {
         con.query("SELECT * FROM students WHERE student_room_id='" + roomId + "'", function (err, result, fields) {
             if (err) throw err;
 
-            console.log(result);
+            // console.log(result);
 
             res.status(200).json(result);
         });

@@ -53,7 +53,8 @@ import {
     EachMilestone,
     PhotoScreen,
     PhotoCaptureScreen,
-    PottyScreen
+    PottyScreen,
+    VideoScreen
 } from './sections';
 
 // Kinder Images
@@ -144,7 +145,7 @@ class HomeScreen extends Component {
             })
                 .then(res => res.json())
                 .then(response => {
-                    let students = [...this.state.students];
+                    let students = [];
                     response.forEach((eachResponse, index) => {
                         let studentName = eachResponse['student_name'];
                         let studentContactNumber = eachResponse['student_contact_number'];
@@ -583,6 +584,9 @@ const TeacherHomePageMain = createDrawerNavigator({
     },
     Photos: {
         screen: PhotoScreen
+    },
+    Video: {
+        screen: VideoScreen
     }
 }, {
         initialRouteName: 'Home',
