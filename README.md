@@ -1,2 +1,6 @@
 # kinder-private
-ssh
+
+
+FINAL KINDER APP
+
+``` If something is missing / Inform ```
